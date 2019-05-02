@@ -11,6 +11,7 @@ import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Domains
 import           Interpreter.Values
+import           Interpreter.Utils
 
 evalExpr :: Expr -> Eval LKValue
 evalExpr (ELitInt n) = do
@@ -31,6 +32,23 @@ evalExpr (EVar id) = do
         Just loc -> case (store & (vars & view)) ^.at loc of
             Just var -> return var
             Nothing  -> throwError RErrorMemoryLocation
+
+evalExpr ELitTrue  = return $ LKBool True
+evalExpr ELitFalse = return $ LKBool False
+evalExpr rel@(ERel exprLeft relOp exprRight) = do
+    eLeft <- evalExpr exprLeft
+    eRight <- evalExpr exprRight
+
+    case (eLeft, eRight) of
+        (LKInt l, LKInt r) -> return $ LKBool ((mapRelOpToRelFunction relOp) l r)
+        _ -> throwError $ RErrorInvalidType Int "" rel
+
+evalExpr mul@(EMul exprLeft mulOp exprRight) = do
+    eLeft <- evalExpr exprLeft
+    eRight <- evalExpr exprRight
+    case (eLeft, eRight) of
+        (LKInt l, LKInt r) -> return $ LKInt ((mapMulOpToMulFunction mulOp) l r)
+        _ -> throwError $ RErrorInvalidTypeNoInfo
 
 evalId :: Id -> Eval Ident
 evalId (Id n) = return n

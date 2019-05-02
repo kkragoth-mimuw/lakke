@@ -26,6 +26,7 @@ executable lakke
                        Interpreter.Values
                        Interpreter.Utils
                        Interpreter.Debug
+                       Interpreter.Types
                        LexLakke
                        ParLakke
                        PrintLakke
