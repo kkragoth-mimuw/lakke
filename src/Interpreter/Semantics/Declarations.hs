@@ -1,18 +1,18 @@
 module Interpreter.Semantics.Declarations where
 
-import Data.Map as Map
-import Control.Lens
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Monad.Except
-import Control.Monad.Writer
+import           Control.Lens
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Control.Monad.State
+import           Control.Monad.Writer
+import           Data.Map                          as Map
 
-import AbsLakke
-import Interpreter.EvalMonad
-import Interpreter.Domains
-import Interpreter.Values
-import Interpreter.Semantics.Expressions
-import Interpreter.Utils
+import           AbsLakke
+import           Interpreter.EvalMonad
+import           Interpreter.Semantics.Domains
+import           Interpreter.Semantics.Expressions
+import           Interpreter.Utils
+import           Interpreter.Values
 
 evalFuncDecl :: LKFunctionDef -> Eval Env
 evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
@@ -22,7 +22,7 @@ evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
   i <- newloc funcDefs
   put (state & (funcDefs . at i ?~ func))
   return (env  & (funcsEnv . at fnName ?~ i))
-  
+
 evalDecl :: Decl -> Eval Env
 evalDecl (Decl type_ item) = evalItem item
 

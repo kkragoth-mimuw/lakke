@@ -1,16 +1,16 @@
 module Interpreter.Semantics.Expressions where
 
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Monad.Except
-import Control.Lens
-import Data.Map as Map
+import           Control.Lens
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Control.Monad.State
+import           Data.Map                      as Map
 
-import AbsLakke
-import Interpreter.EvalMonad
-import Interpreter.Domains
-import Interpreter.Values
-import Interpreter.ErrorTypes
+import           AbsLakke
+import           Interpreter.ErrorTypes
+import           Interpreter.EvalMonad
+import           Interpreter.Semantics.Domains
+import           Interpreter.Values
 
 evalExpr :: Expr -> Eval LKValue
 evalExpr (ELitInt n) = do
@@ -28,14 +28,14 @@ evalExpr (EVar id) = do
 
     -- let venv = view varsEnv env
     -- let venv = (view varsEnv) env
-    
+
     -- return $ LKInt 2
 
     case (env & (varsEnv & view)) ^.at ident of
         Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
         Just loc -> case (state & (vars & view)) ^.at loc of
             Just var -> return var
-            Nothing -> throwError RErrorMemoryLocation
+            Nothing  -> throwError RErrorMemoryLocation
 
     -- case (view (env . varsEnv)) ^.at ident of
         --   Nothing -> throwError $ RErrorUnknownIdentifier (show ident)

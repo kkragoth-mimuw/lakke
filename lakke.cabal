@@ -20,7 +20,7 @@ executable lakke
   main-is:             Main.hs
   other-modules:       AbsLakke
                        ErrM
-                       Interpreter.Domains
+                       Interpreter.Semantics.Domains
                        Interpreter.ErrorTypes
                        Interpreter.EvalMonad
                        Interpreter.Program

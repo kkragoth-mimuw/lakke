@@ -1,8 +1,8 @@
 module Interpreter.Values where
 
-import Data.Map as Map
+import           Data.Map as Map
 
-import AbsLakke
+import           AbsLakke
 
 data LKValue  = LKInt Integer
               | LKBool Bool
