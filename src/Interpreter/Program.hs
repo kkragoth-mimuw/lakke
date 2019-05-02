@@ -10,6 +10,7 @@ import AbsLakke
 import Interpreter.Domains
 import Interpreter.ErrorTypes
 import Interpreter.EvalMonad
+import Interpreter.Semantics.TopDefs
 
 runProgram :: (Executable program) => Env -> Store -> program -> ((Either RuntimeError (), Store), [String])
 runProgram env st program = runWriter (runStateT (runExceptT (runReaderT (exec program) env)) st) 
@@ -22,10 +23,14 @@ instance Executable Program where
     env <- evalTopDefs topdefs
     state <- get
 
-    traceM $ "state: " ++ show state
-    traceM $ "env: " ++ show env
+    debug env state
 
     return ()
 
-evalTopDefs :: [TopDef] -> Eval Env
-evalTopDefs _ = undefined
+debug :: Env -> Store -> Eval ()
+debug env state = do
+  traceM "Debug stats"
+  traceM "state:"
+  traceM $ show state
+  traceM "env:"
+  traceM $ show env

@@ -29,11 +29,17 @@ executable lakke
                        ParLakke
                        PrintLakke
                        SkelLakke
+                       Interpreter.Semantics.Declarations
+                       Interpreter.Semantics.TopDefs
+                       Interpreter.Semantics.Expressions
+                       Interpreter.Semantics.Statements
   -- other-extensions:
   build-depends:       base >=4.11
                ,       mtl
                ,       text
                ,       array
                ,       containers
+               ,       vector
+               ,       lens
   hs-source-dirs:      src, generated, .
   default-language:    Haskell2010
