@@ -9,6 +9,6 @@ import           Interpreter.Semantics.Domains
 
 
 newloc :: Getting (Map.Map Integer a) Store (Map.Map Integer a) -> Eval Integer
-newloc stateGetter = do
-    state <- get
-    return $ toInteger $ Map.size (state & (stateGetter & view))
+newloc storeGetter = do
+    store <- get
+    return $ toInteger $ Map.size (store & (storeGetter & view))

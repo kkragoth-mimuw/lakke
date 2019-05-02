@@ -23,26 +23,14 @@ evalExpr (EAdd expr1 addop expr2) = do
 
 evalExpr (EVar id) = do
     env <- ask
-    state <- get
+    store <- get
     ident <- evalId id
-
-    -- let venv = view varsEnv env
-    -- let venv = (view varsEnv) env
-
-    -- return $ LKInt 2
 
     case (env & (varsEnv & view)) ^.at ident of
         Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
-        Just loc -> case (state & (vars & view)) ^.at loc of
+        Just loc -> case (store & (vars & view)) ^.at loc of
             Just var -> return var
             Nothing  -> throwError RErrorMemoryLocation
-
-    -- case (view (env . varsEnv)) ^.at ident of
-        --   Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
-        --   Just loc -> return $ LKInt 1
-          --case (view (state . vars)) ^.at loc of
-           -- Just var -> return var
-            --Nothing -> throwError RErrorMemoryLocation
 
 evalId :: Id -> Eval Ident
 evalId (Id n) = return n

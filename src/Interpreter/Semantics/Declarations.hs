@@ -16,11 +16,11 @@ import           Interpreter.Values
 
 evalFuncDecl :: LKFunctionDef -> Eval Env
 evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
-  state <- get
+  store <- get
   env <- ask
 
   i <- newloc funcDefs
-  put (state & (funcDefs . at i ?~ func))
+  put (store & (funcDefs . at i ?~ func))
   return (env  & (funcsEnv . at fnName ?~ i))
 
 evalDecl :: Decl -> Eval Env
@@ -31,13 +31,11 @@ evalItem (Init id expr) = do
   value <- evalExpr expr
   name <- evalId id
 
-  state <- get
+  store <- get
 
-  let i = toInteger $ Map.size (state & (vars & view))
+  i <- newloc vars
 
-  tell $ [show i]
-
-  put (state & (vars . at i ?~ value))
+  put (store & (vars . at i ?~ value))
 
   env <- ask
 

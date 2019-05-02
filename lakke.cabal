@@ -20,12 +20,12 @@ executable lakke
   main-is:             Main.hs
   other-modules:       AbsLakke
                        ErrM
-                       Interpreter.Semantics.Domains
                        Interpreter.ErrorTypes
                        Interpreter.EvalMonad
                        Interpreter.Program
                        Interpreter.Values
                        Interpreter.Utils
+                       Interpreter.Debug
                        LexLakke
                        ParLakke
                        PrintLakke
@@ -34,6 +34,7 @@ executable lakke
                        Interpreter.Semantics.TopDefs
                        Interpreter.Semantics.Expressions
                        Interpreter.Semantics.Statements
+                       Interpreter.Semantics.Domains
   -- other-extensions:
   build-depends:       base >=4.11
                ,       mtl

@@ -5,14 +5,15 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Control.Monad.Writer
-import           Debug.Pretty.Simple           (pTraceShowM)
-import           Debug.Trace
-import           System.Console.Pretty         (Color (..), Style (..), bgColor, color, style, supportsPretty)
 
 import           AbsLakke
+import           Interpreter.Debug
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
+import           Interpreter.Values
+
 import           Interpreter.Semantics.Domains
+import           Interpreter.Semantics.Statements
 import           Interpreter.Semantics.TopDefs
 
 runProgram :: (Executable program) => Env -> Store -> program -> ((Either RuntimeError (), Store), [String])
@@ -24,18 +25,14 @@ class Executable f where
 instance Executable Program where
   exec (Program topdefs) = do
     env <- evalTopDefs topdefs
-    state <- get
+    store <- get
 
-    debug env state
+    runMainBlock env store
 
-    case (env & (funcsEnv & view)) ^.at (Ident "main") of
-      Nothing -> throwError $ RErrorNoMainFunction
-      Just loc -> case (state & (funcDefs & view)) ^.at loc of
-        Nothing   -> throwError RErrorNoMainFunction
-        Just func -> return ()
-
-debug :: Env -> Store -> Eval ()
-debug env state = do
-  traceM $ color Yellow "Debug"
-  pTraceShowM state
-  pTraceShowM env
+runMainBlock :: Env -> Store -> Eval ()
+runMainBlock env store =
+  case (env & (funcsEnv & view)) ^.at (Ident "main") of
+    Nothing -> throwError $ RErrorNoMainFunction
+    Just loc -> case (store & (funcDefs & view)) ^.at loc of
+      Nothing                                  -> throwError RErrorNoMainFunction
+      Just (LKFunctionDef _ _ _ (Block stmts)) -> local (const env) (evalStmts stmts)
