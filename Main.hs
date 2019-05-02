@@ -7,6 +7,8 @@ import System.Exit ( exitFailure, exitSuccess )
 import Control.Monad (when)
 import Data.Typeable
 import qualified Data.Map as Map
+import System.Console.Pretty (Color (..), Style (..), bgColor, color,
+                                        style, supportsPretty)
 
 import LexLakke
 import ParLakke
@@ -39,10 +41,12 @@ run v p s = let ts = myLLexer s in case p ts of
                           putStrV v $ show ts
                           putStrLn s
                           exitFailure
-           Ok  tree -> do putStrLn "\nParse Successful!"
-                          print $ show $ runProgram initEnv initStore tree
+           Ok  tree -> do let ((result, _), buffer) = runProgram initEnv initStore tree
+                          putStr $ unlines buffer
 
-                          exitSuccess
+                          case result of
+                            Left error -> putStrLn (color Red ("Lakke has encountered a problem: " ++ show error))
+                            _ -> exitSuccess
 
 
 showTree :: (Show a, Print a) => Int -> a -> IO ()

@@ -4,7 +4,11 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Monad.Writer
+import Control.Lens
 import Debug.Trace
+import Debug.Pretty.Simple (pTraceShowM)
+import System.Console.Pretty (Color (..), Style (..), bgColor, color,
+                                        style, supportsPretty)
 
 import AbsLakke
 import Interpreter.Domains
@@ -25,12 +29,14 @@ instance Executable Program where
 
     debug env state
 
-    return ()
+    case (env & (funcsEnv & view)) ^.at (Ident "main") of
+      Nothing -> throwError $ RErrorNoMainFunction
+      Just loc -> case (state & (funcDefs & view)) ^.at loc of
+        Nothing -> throwError $ RErrorNoMainFunction
+        Just func -> return ()
 
 debug :: Env -> Store -> Eval ()
 debug env state = do
-  traceM "Debug stats"
-  traceM "state:"
-  traceM $ show state
-  traceM "env:"
-  traceM $ show env
+  traceM $ color Yellow "Debug"
+  pTraceShowM $ state
+  pTraceShowM $ env

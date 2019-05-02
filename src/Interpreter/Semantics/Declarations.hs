@@ -10,9 +10,18 @@ import Control.Monad.Writer
 import AbsLakke
 import Interpreter.EvalMonad
 import Interpreter.Domains
+import Interpreter.Values
 import Interpreter.Semantics.Expressions
+import Interpreter.Utils
 
+evalFuncDecl :: LKFunctionDef -> Eval Env
+evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
+  state <- get
+  env <- ask
 
+  i <- newloc funcDefs
+  put (state & (funcDefs . at i ?~ func))
+  return (env  & (funcsEnv . at fnName ?~ i))
   
 evalDecl :: Decl -> Eval Env
 evalDecl (Decl type_ item) = evalItem item

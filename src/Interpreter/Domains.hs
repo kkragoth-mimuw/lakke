@@ -19,13 +19,13 @@ data Store = Store {       _vars   :: Map.Map Integer LKValue
                    , _structDefs   :: Map.Map Integer LKStructDef
                    } deriving (Show)
 
-initEnv   = Env   {    _varsEnv         = Map.empty
+initEnv   = Env   {    _varsEnv        = Map.empty
                   ,   _funcsEnv        = Map.empty
                   , _structsEnv        = Map.empty
                   }
 
 initStore = Store {       _vars       = Map.empty
-                  ,   _funcDefs         = Map.empty
+                  ,   _funcDefs       = Map.empty
                   , _structDefs       = Map.empty
                   }
 

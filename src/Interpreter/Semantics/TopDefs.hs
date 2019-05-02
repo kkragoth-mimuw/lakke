@@ -6,6 +6,7 @@ import AbsLakke
 import Interpreter.EvalMonad
 import Interpreter.Domains
 import Interpreter.Semantics.Declarations
+import Interpreter.Values
 
 evalTopDefs :: [TopDef] -> Eval Env
 evalTopDefs [] = ask
@@ -15,3 +16,4 @@ evalTopDefs (x:xs) = do
 
 evalTopDef :: TopDef -> Eval Env
 evalTopDef (Global decl) = evalDecl decl
+evalTopDef fnDef@(FnDef fnType fnName args block) = evalFuncDecl $ LKFunctionDef fnType fnName args block

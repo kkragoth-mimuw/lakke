@@ -7,19 +7,12 @@ import AbsLakke
 data LKValue  = LKInt Integer
               | LKBool Bool
               | LKString String
-              | LKFunc LKFunctionDef
+              | LKFunction LKFunctionDef
               | LKStruct LKStructDef (Map.Map Ident LKValue)
                 deriving (Show)
 
-                
-data FuncArgument = FuncArgument { ident   :: Ident
-                                 , byValue :: Bool
-                                 , argType :: Type
-                                 }
-                     deriving (Show)
 
-
-data LKFunctionDef = LKFunction Type [FuncArgument] Block
+data LKFunctionDef = LKFunctionDef Type Ident [Arg] Block
                      deriving (Show)
 
 
