@@ -34,7 +34,7 @@ int main() {
 
   int mature_users = count_users_above_age(users, 2, 18);
 
-  printLn("#Mature users: " + (cast (string) mature_users));
+  print("#Mature users: " + (cast (string) mature_users));
 
   return 0;
 }

@@ -29,10 +29,13 @@ evalStmts (x:xs) = do
 
 evalStmt :: Stmt -> Eval Env
 
+evalStmt (ArrayDecl typeLk expr ident) = undefined
+evalStmt (Struct structDecl) = undefined
+evalStmt (DeclS decl) = evalDecl decl
+evalStmt (Ass id expr) = undefined
 evalStmt Empty = ask
 evalStmt (BStmt (Block stmts)) = evalStmts stmts >> ask
-evalStmt (DeclS decl) = evalDecl decl
-evalStmt (PrintLn expr) = do
+evalStmt (Print expr) = do
     e <- evalExpr expr
 
     case isSimpleType e of

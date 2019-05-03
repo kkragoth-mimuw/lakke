@@ -60,8 +60,6 @@ While.     Stmt ::= "while" "(" Expr ")" Block;
 
 Print.      Stmt ::= "print" "(" Expr ")" ";" ;
 
-PrintLn.    Stmt ::= "printLn" "(" Expr ")" ";" ;
-
 Ass.       Stmt ::= Id "=" Expr  ";" ;
 
 Incr.      Stmt ::= Id "++"  ";" ;
@@ -94,8 +92,6 @@ Bool.          Type ::= "boolean" ;
 Void.          Type ::= "void" ;
 
 Array.         Type ::= Type "[" "]" ;
-
-Map.           Type ::= "Map[" Type "->" Type "]" ;
 
 StructType.    Type ::= "struct" Ident ;
 

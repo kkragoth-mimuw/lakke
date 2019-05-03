@@ -8,6 +8,6 @@ int main() {
         if (i > 10) {
             break;
         }
-		printLn(i);
+		print(i);
 	}
 }
