@@ -1,21 +1,21 @@
 module Interpreter.Semantics.Statements where
 
-import           Control.Monad.Reader
-import           Control.Monad.Writer
-import           Control.Monad.Except
-import           Control.Monad.State
 import           Control.Lens
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Control.Monad.State
+import           Control.Monad.Writer
 
 import           AbsLakke
 
 import           Debug.Trace
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
-import           Interpreter.Values
-import           Interpreter.Types
+import           Interpreter.Semantics.Declarations
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Expressions
-import           Interpreter.Semantics.Declarations
+import           Interpreter.Types
+import           Interpreter.Values
 
 evalStmts :: [Stmt] -> Eval ()
 evalStmts [] = return ()
@@ -30,7 +30,7 @@ evalStmt (PrintLn expr) = do
     e <- evalExpr expr
 
     case isSimpleType e of
-        True -> tell [simpleTypeToString e]
+        True  -> tell [simpleTypeToString e]
         False -> throwError $ RErrorInvalidTypeNoInfo
     ask
 
@@ -49,21 +49,21 @@ evalStmt (Incr id) = do
     store <- get
     env <- ask
 
-    case (env & (varsEnv & view)) ^.at ident of
+    case env ^. varsEnv .at ident of
         Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
-        Just loc -> case (store & (vars & view)) ^.at loc of
-            Just var -> case var of
-                    (LKInt i) -> put (store & (vars . at loc ?~ (LKInt (i + 1))))
-                    _ ->throwError RErrorInvalidTypeNoInfo
+        Just loc -> case store ^. vars .at loc of
             Nothing  -> throwError RErrorMemoryLocation
-
+            Just var -> case var of
+                (LKInt i) -> put $ store & vars . at loc ?~ LKInt (i + 1)
+                _         -> throwError RErrorInvalidTypeNoInfo
+                
     ask
 
 evalStmt whileStmt@(While expr (Block stmts)) = do
     e <- evalExpr expr
 
-    case e of 
-        (LKBool True) -> do 
+    case e of
+        (LKBool True) -> do
                          evalStmts stmts
                          evalStmt whileStmt
         (LKBool False) -> ask
