@@ -1,7 +1,13 @@
 module Interpreter.TypesUtils where
 
+import           Control.Monad.Except
+import           Control.Monad.Writer
+
 import           AbsLakke
+
+import           Interpreter.EvalMonad
 import           Interpreter.Values
+import           Interpreter.ErrorTypes
 
 lkType :: LKValue -> Type
 lkType lkValue = case lkValue of
@@ -31,3 +37,10 @@ simpleTypeToString lkValue = case lkValue of
     (LKString s) -> show s
     (LKBool b)   -> show b
     _            -> ""
+
+tellValue :: LKValue -> Eval ()
+tellValue lkValue =
+    if isSimpleType lkValue then
+        tell [simpleTypeToString lkValue]
+    else
+        throwError REValueIsNotPrintable

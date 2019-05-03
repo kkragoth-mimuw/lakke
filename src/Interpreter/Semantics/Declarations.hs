@@ -32,6 +32,7 @@ evalArrayDecl arrayType expr ident = undefined
 
 evalStructDecl :: StructDecl -> Eval Env
 evalStructDecl structDecl = undefined
+
 evalItem :: Item -> Eval Env
 evalItem (Init lvalue expr) = do
   value <- evalExpr expr

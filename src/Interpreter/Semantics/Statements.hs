@@ -33,16 +33,8 @@ evalStmtOrDeclaration :: Stmt -> Eval Env
 evalStmtOrDeclaration stmt = case stmt of
     (DeclS decl) -> evalDecl decl
     (ArrayDecl arrayType expr ident) -> evalArrayDecl arrayType expr ident
-    (Struct structDecl) -> undefined
+    (Struct structDecl) -> evalStructDecl structDecl
     _ -> evalStmt stmt >> ask
-
-
-evalStmt (Print expr) = do
-    e <- evalExpr expr
-
-    if isSimpleType e then
-        tell [simpleTypeToString e]
-    else throwError RErrorInvalidTypeNoInfo
 
 
 evalStmt (Cond expr block) = evalStmt (CondElse expr block (Block []))
@@ -91,7 +83,7 @@ evalStmt (Ass lvalue expr) = do
     else 
         throwError RErrorInvalidTypeNoInfo
 
-        
+
 evalStmt Empty = return ()
 
 evalStmt Break = throwError LKBreak
@@ -103,6 +95,8 @@ evalStmt (SExp expr) = void $ evalExpr expr
 evalStmt (BStmt (Block stmts)) = evalStmts stmts
 
 evalStmt VRet = throwError $ LKReturn Nothing
+
+evalStmt (Print expr) = evalExpr expr >>= tellValue
 
 evalStmt (Ret expr) = evalExpr expr >>= \value -> throwError $ LKReturn (Just value)
 

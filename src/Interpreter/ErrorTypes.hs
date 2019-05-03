@@ -12,6 +12,7 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | RErrorNoMainFunction
                   | RErrorInvalidTypeNoInfo
                   | RErrorInvalidType Type String Expr
+                  | REValueIsNotPrintable
                   | REDebug String
                   | LKBreak
                   | LKContinue
@@ -24,6 +25,7 @@ instance Show RuntimeError where
     show RErrorMemoryLocation                     = "Location not in store"
     show (RErrorInvalidType exprType reason expr) = printf "Invalid type: %s in %s. %s" (show exprType) (show expr) reason
     show RErrorInvalidTypeNoInfo                  = "Invalid type"
+    show REValueIsNotPrintable                    = "Unable to print value"
     show (REDebug s)                              = s
     show LKBreak                                  = "break"
     show LKContinue                               = "continue"
