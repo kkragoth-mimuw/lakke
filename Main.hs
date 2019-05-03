@@ -41,9 +41,8 @@ run v p s = let ts = myLLexer s in case p ts of
                           putStrLn s
                           exitFailure
            Ok  tree -> do let ((result, _), buffer) = runProgram initEnv initStore tree
-                          putStrLn $ "buffer"
-                          putStr $ unlines buffer
-                          putStrLn $ "end of buffer"
+                          putStrLn ""
+                          putStr (color Yellow ( unlines buffer))
 
                           case result of
                             Left error -> putStrLn (color Red ("Lakke has encountered a problem: " ++ show error))

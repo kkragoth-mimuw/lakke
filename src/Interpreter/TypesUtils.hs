@@ -14,6 +14,7 @@ lkType lkValue = case lkValue of
     (LKInt _)    -> Int
     (LKString _) -> Str
     (LKBool _)   -> Bool
+    LKVoid     -> Void
     _            -> Void
 
 checkIfAllowedTypeOfValue :: [Type] -> LKValue -> Bool

@@ -12,7 +12,6 @@ import           AbsLakke
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Domains
-import           Interpreter.Semantics.Expressions
 import           Interpreter.Values
 
 
@@ -30,7 +29,7 @@ extractVariableLocation :: Ident -> Eval Location
 extractVariableLocation ident = do
     env <- ask
 
-    let maybeLocation = env ^. varsEnv .at ident
+    let maybeLocation = env ^. varsEnv . at ident
 
     when (isNothing maybeLocation)
         (throwError $ RErrorUnknownIdentifier (show ident))
@@ -42,7 +41,7 @@ extractVariableFromStore :: Location -> Eval LKValue
 extractVariableFromStore location = do
     store <- get
 
-    let maybeValue = store ^. vars .at location
+    let maybeValue = store ^. vars . at location
 
     when (isNothing maybeValue)
         (throwError RErrorMemoryLocation)
@@ -69,3 +68,13 @@ overIntegerVariable ident f = do
     case variable of
         (LKInt i) -> assignVariable ident (LKInt (f i))
         _         -> throwError RErrorInvalidTypeNoInfo
+
+copySimpleVariable :: LKValue -> Eval Location
+copySimpleVariable value = do
+    i <- newloc vars
+
+    store <- get
+
+    put $ store & (vars . at i ?~ value)
+
+    return i

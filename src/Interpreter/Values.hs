@@ -9,6 +9,7 @@ data LKValue  = LKInt Integer
               | LKString String
               | LKFunction LKFunctionDef
               | LKStruct LKStructDef (Map.Map Ident LKValue)
+              | LKVoid
                 deriving (Show)
 
 
