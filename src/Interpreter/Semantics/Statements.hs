@@ -37,6 +37,7 @@ evalStmtOrDeclaration stmt = case stmt of
     _ -> evalStmt stmt >> ask
 
 
+evalStmt :: Stmt -> Eval ()
 evalStmt (Cond expr block) = evalStmt (CondElse expr block (Block []))
 
 evalStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
