@@ -4,6 +4,8 @@ import           Text.Printf
 
 import           AbsLakke
 
+import           Interpreter.Values
+
 data RuntimeError = RErrorUnknownIdentifier String
                   | RErrorDivisonByZero
                   | RErrorMemoryLocation
@@ -13,6 +15,7 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | REDebug String
                   | LKBreak
                   | LKContinue
+                  | LKReturn (Maybe LKValue)
 
 
 instance Show RuntimeError where

@@ -106,5 +106,7 @@ evalStmt (For initStmt expr outerStmt block@(Block stmts)) = do
 
 evalStmt Break = throwError LKBreak
 evalStmt Continue = throwError LKContinue
+evalStmt VRet = throwError $ LKReturn Nothing
+evalStmt (Ret expr) = evalExpr expr >>= \value -> throwError $ LKReturn (Just value)
 evalStmt (SExp expr) = evalExpr expr >> ask
 evalStmt a = throwError $ REDebug $ show a
