@@ -42,15 +42,15 @@ StructDecl. StructDecl ::= "struct" Ident "{" [ SDeclItem] "}" ";";
 
 Struct.     Stmt ::= StructDecl;
 
-Id.         Id   ::= Ident ;
+LValue.         LValue  ::= Ident ;
 
-Select.     Id   ::= Id "." Ident ;
+Select.     LValue   ::= LValue "." Ident ;
 
-ArraySelect. Id   ::= Id "[" Expr "]" ;
+ArraySelect. LValue   ::= LValue "[" Expr "]" ;
 
-NoInit.    Item ::= Id ; 
+NoInit.    Item ::= LValue ; 
 
-Init.      Item ::= Id "=" Expr ;
+Init.      Item ::= LValue "=" Expr ;
 
 separator nonempty Item "," ;
 
@@ -60,11 +60,11 @@ While.     Stmt ::= "while" "(" Expr ")" Block;
 
 Print.      Stmt ::= "print" "(" Expr ")" ";" ;
 
-Ass.       Stmt ::= Id "=" Expr  ";" ;
+Ass.       Stmt ::= LValue "=" Expr  ";" ;
 
-Incr.      Stmt ::= Id "++"  ";" ;
+Incr.      Stmt ::= LValue "++"  ";" ;
 
-Decr.      Stmt ::= Id "--"  ";" ;
+Decr.      Stmt ::= LValue "--"  ";" ;
 
 Break.     Stmt ::= "break" ";" ;
 
@@ -100,9 +100,9 @@ internal  Fun. Type ::= Type "(" [Type] ")" ;
 separator  Type "," ;
 
 -- Expressions ---------------------------------------------
-EApp.      Expr7 ::= Id "(" [ Expr ] ")" ;
+EApp.      Expr7 ::= LValue "(" [ Expr ] ")" ;
 
-EVar.      Expr6 ::= Id ;
+EVar.      Expr6 ::= LValue ;
 
 ELitInt.   Expr6 ::= Integer ;
 

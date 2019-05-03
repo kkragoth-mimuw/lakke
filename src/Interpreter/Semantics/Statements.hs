@@ -52,8 +52,8 @@ evalStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
         _            -> throwError $ RErrorInvalidType Int "" expr
     ask
 
-evalStmt (Incr id) = do
-    ident <- evalId id
+evalStmt (Incr lvalue) = do
+    ident <- evalLValue lvalue
 
     variable <- extractVariable ident
 
@@ -67,8 +67,8 @@ evalStmt (Incr id) = do
 
     ask
 
-evalStmt (Decr id) = do
-    ident <- evalId id
+evalStmt (Decr lvalue) = do
+    ident <- evalLValue lvalue
 
     variable <- extractVariable ident
 
@@ -112,4 +112,3 @@ evalStmt Continue = throwError LKContinue
 evalStmt VRet = throwError $ LKReturn Nothing
 evalStmt (Ret expr) = evalExpr expr >>= \value -> throwError $ LKReturn (Just value)
 evalStmt (SExp expr) = evalExpr expr >> ask
-evalStmt a = throwError $ REDebug $ show a

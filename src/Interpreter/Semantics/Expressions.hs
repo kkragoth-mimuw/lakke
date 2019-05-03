@@ -20,10 +20,10 @@ evalExpr (EAdd expr1 addop expr2) = do
     LKInt e2 <- evalExpr expr2
     return $ LKInt $ e1 + e2
 
-evalExpr (EVar id) = do
+evalExpr (EVar lvalue) = do
     env <- ask
     store <- get
-    ident <- evalId id
+    ident <- evalLValue lvalue
 
     case (env & (varsEnv & view)) ^.at ident of
         Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
@@ -52,6 +52,6 @@ evalExpr (ELitInt int) = return $ LKInt int
 evalExpr ELitTrue  = return $ LKBool True
 evalExpr ELitFalse = return $ LKBool False
 evalExpr a = throwError $ REDebug $ show a
-evalId :: Id -> Eval Ident
-evalId (Id n) = return n
+evalLValue :: LValue -> Eval Ident
+evalLValue (LValue n) = return n
 

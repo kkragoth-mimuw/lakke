@@ -27,9 +27,9 @@ evalDecl :: Decl -> Eval Env
 evalDecl (Decl type_ item) = evalItem item
 
 evalItem :: Item -> Eval Env
-evalItem (Init id expr) = do
+evalItem (Init lvalue expr) = do
   value <- evalExpr expr
-  name <- evalId id
+  name <- evalLValue lvalue
 
   store <- get
 
