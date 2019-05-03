@@ -20,12 +20,18 @@ evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
   env <- ask
 
   i <- newloc funcDefs
+
   put (store & (funcDefs . at i ?~ func))
   return (env  & (funcsEnv . at fnName ?~ i))
 
 evalDecl :: Decl -> Eval Env
 evalDecl (Decl type_ item) = evalItem item
 
+evalArrayDecl :: Type -> Expr -> Ident -> Eval Env
+evalArrayDecl arrayType expr ident = undefined
+
+evalStructDecl :: StructDecl -> Eval Env
+evalStructDecl structDecl = undefined
 evalItem :: Item -> Eval Env
 evalItem (Init lvalue expr) = do
   value <- evalExpr expr

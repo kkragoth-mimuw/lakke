@@ -12,6 +12,7 @@ import           AbsLakke
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Domains
+import           Interpreter.Semantics.Expressions
 import           Interpreter.Values
 
 
@@ -47,3 +48,24 @@ extractVariableFromStore location = do
         (throwError RErrorMemoryLocation)
 
     return $ fromJust maybeValue
+
+
+assignVariable :: Ident -> LKValue -> Eval ()
+assignVariable ident value = do
+    store <- get
+    loc <- extractVariableLocation ident
+
+    put $ store & (vars . at loc ?~ value)
+
+
+overIntegerVariable :: Ident -> (Integer -> Integer) -> Eval()
+overIntegerVariable ident f = do
+
+    variable <- extractVariable ident
+
+    store <- get
+    loc <- extractVariableLocation ident
+
+    case variable of
+        (LKInt i) -> assignVariable ident (LKInt (f i))
+        _         -> throwError RErrorInvalidTypeNoInfo

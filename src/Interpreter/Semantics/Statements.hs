@@ -21,94 +21,91 @@ import           Interpreter.Semantics.Expressions
 import           Interpreter.TypesUtils
 import           Interpreter.Values
 
+
 evalStmts :: [Stmt] -> Eval ()
 evalStmts [] = return ()
 evalStmts (x:xs) = do
-    env <- evalStmt x
+    env <- evalStmtOrDeclaration x
     local (const env) (evalStmts xs)
 
-evalStmt :: Stmt -> Eval Env
 
-evalStmt (ArrayDecl typeLk expr ident) = undefined
-evalStmt (Struct structDecl) = undefined
-evalStmt (DeclS decl) = evalDecl decl
-evalStmt (Ass id expr) = undefined
-evalStmt Empty = ask
-evalStmt (BStmt (Block stmts)) = evalStmts stmts >> ask
+evalStmtOrDeclaration :: Stmt -> Eval Env
+evalStmtOrDeclaration stmt = case stmt of
+    (DeclS decl) -> evalDecl decl
+    (ArrayDecl arrayType expr ident) -> evalArrayDecl arrayType expr ident
+    (Struct structDecl) -> undefined
+    _ -> evalStmt stmt >> ask
+
+
 evalStmt (Print expr) = do
     e <- evalExpr expr
 
-    case isSimpleType e of
-        True  -> tell [simpleTypeToString e]
-        False -> throwError $ RErrorInvalidTypeNoInfo
-    ask
+    if isSimpleType e then
+        tell [simpleTypeToString e]
+    else throwError RErrorInvalidTypeNoInfo
+
 
 evalStmt (Cond expr block) = evalStmt (CondElse expr block (Block []))
+
 evalStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
     e <- evalExpr expr
     case e of
         LKBool True  -> evalStmts blockTrue
         LKBool False -> evalStmts blockFalse
         _            -> throwError $ RErrorInvalidType Int "" expr
-    ask
 
-evalStmt (Incr lvalue) = do
-    ident <- evalLValue lvalue
-
-    variable <- extractVariable ident
-
-    store <- get
-
-    loc <- extractVariableLocation ident
-
-    case variable of
-        (LKInt i) -> put $ store & (vars . at loc ?~ LKInt (i + 1))
-        _         -> throwError RErrorInvalidTypeNoInfo
-
-    ask
-
-evalStmt (Decr lvalue) = do
-    ident <- evalLValue lvalue
-
-    variable <- extractVariable ident
-
-    store <- get
-
-    loc <- extractVariableLocation ident
-
-    case variable of
-        (LKInt i) -> put $ store & (vars . at loc ?~ LKInt (i - 1))
-        _         -> throwError RErrorInvalidTypeNoInfo
-
-    ask
 
 evalStmt (While expr block) = evalStmt (For Empty expr Empty block)
 
 evalStmt (For initStmt expr outerStmt block@(Block stmts)) = do
-    env <- evalStmt initStmt
+    env <- evalStmtOrDeclaration initStmt
     local (const env) (
         do
             condition <- evalExpr expr
             case condition of
-                (LKBool False) -> ask
-                (LKBool True) -> (do
-                     evalStmts stmts;
-                     evalStmt outerStmt;
-                     evalStmt (For Empty expr outerStmt block)
-                    ) `catchError` (\case
-                                        LKBreak -> ask
+                (LKBool False) -> return ()
+                (LKBool True) -> (
+                    do
+                                evalStmts stmts
+                                evalStmt outerStmt
+                                evalStmt (For Empty expr outerStmt block)
+                    ) `catchError` (
+                        \case
+                                        LKBreak -> return ()
                                         LKContinue -> do
-                                                        evalStmt outerStmt
-                                                        evalStmt (For Empty expr outerStmt block)
+                                                    evalStmt outerStmt
+                                                    evalStmt (For Empty expr outerStmt block)
                                         error -> throwError error
                                     )
                 _ -> throwError RErrorInvalidTypeNoInfo
         )
 
-    ask
+
+evalStmt (Ass lvalue expr) = do
+    ident <- evalLValue lvalue
+    variable <- extractVariable ident
+    rvalue <- evalExpr expr
+
+    if lkType variable == lkType rvalue then
+        assignVariable ident rvalue
+    else 
+        throwError RErrorInvalidTypeNoInfo
+
+        
+evalStmt Empty = return ()
 
 evalStmt Break = throwError LKBreak
+
 evalStmt Continue = throwError LKContinue
+
+evalStmt (SExp expr) = void $ evalExpr expr
+
+evalStmt (BStmt (Block stmts)) = evalStmts stmts
+
 evalStmt VRet = throwError $ LKReturn Nothing
+
 evalStmt (Ret expr) = evalExpr expr >>= \value -> throwError $ LKReturn (Just value)
-evalStmt (SExp expr) = evalExpr expr >> ask
+
+evalStmt (Incr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ident (1 +)
+
+evalStmt (Decr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ident (1 -)
