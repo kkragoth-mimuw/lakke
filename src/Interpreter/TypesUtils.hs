@@ -1,6 +1,8 @@
-module Interpreter.Types where
+module Interpreter.TypesUtils where
 
 import Interpreter.Values
+
+-- checkIfAllowedType 
 
 isSimpleType :: LKValue -> Bool
 isSimpleType lkValue = case lkValue of

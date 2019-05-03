@@ -9,14 +9,16 @@ import qualified Data.Vector        as V
 import           AbsLakke
 import           Interpreter.Values
 
-data Env   = Env   {    _varsEnv :: Map.Map Ident Integer
-                   ,   _funcsEnv :: Map.Map Ident Integer
-                   , _structsEnv :: Map.Map Ident Integer
+type Location = Integer
+
+data Env   = Env   {    _varsEnv :: Map.Map Ident Location
+                   ,   _funcsEnv :: Map.Map Ident Location
+                   , _structsEnv :: Map.Map Ident Location
                    } deriving (Show)
 
-data Store = Store {       _vars :: Map.Map Integer LKValue
-                   ,   _funcDefs :: Map.Map Integer LKFunctionDef
-                   , _structDefs :: Map.Map Integer LKStructDef
+data Store = Store {       _vars :: Map.Map Location LKValue
+                   ,   _funcDefs :: Map.Map Location LKFunctionDef
+                   , _structDefs :: Map.Map Location LKStructDef
                    } deriving (Show)
 
 initEnv   = Env   {    _varsEnv        = Map.empty

@@ -5,16 +5,18 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Control.Monad.Writer
+import           Data.Maybe
 
 import           AbsLakke
 
 import           Debug.Trace
+import           Interpreter.DomainsUtils
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Declarations
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Expressions
-import           Interpreter.Types
+import           Interpreter.TypesUtils
 import           Interpreter.Values
 
 evalStmts :: [Stmt] -> Eval ()
@@ -46,17 +48,16 @@ evalStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
 evalStmt (Incr id) = do
     ident <- evalId id
 
-    store <- get
-    env <- ask
+    variable <- extractVariable ident
 
-    case env ^. varsEnv .at ident of
-        Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
-        Just loc -> case store ^. vars .at loc of
-            Nothing  -> throwError RErrorMemoryLocation
-            Just var -> case var of
-                (LKInt i) -> put $ store & vars . at loc ?~ LKInt (i + 1)
-                _         -> throwError RErrorInvalidTypeNoInfo
-                
+    store <- get
+
+    loc <- extractVariableLocation ident
+
+    case variable of
+        (LKInt i) -> put $ store & vars . at loc ?~ LKInt (i + 1)
+        _         -> throwError RErrorInvalidTypeNoInfo
+
     ask
 
 evalStmt whileStmt@(While expr (Block stmts)) = do
