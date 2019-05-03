@@ -13,6 +13,24 @@ import           Interpreter.Semantics.Domains
 import           Interpreter.Values
 import           Interpreter.Utils
 
+evalExprDependencyInjection :: [[Stmt] -> Eval ()] -> Expr -> Eval LKValue
+evalExprDependencyInjection [evalStmts] (EApp lvalue args) = applyFunction evalStmts lvalue args
+evalExprDependencyInjection _ expr = evalExpr expr
+
+applyFunction :: ([Stmt] -> Eval ()) -> LValue -> [Expr] -> Eval LKValue
+applyFunction evalStmts lvalue args = do
+    env <- ask
+    store <- get
+    ident <- evalLValue lvalue
+
+    case (env & (funcsEnv & view)) ^.at ident of
+        Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
+        Just loc -> case (store & (funcDefs & view)) ^.at loc of
+            Just (LKFunctionDef returnType ident args (Block stmts)) -> do evalStmts stmts; return $ LKInt 2
+            Nothing  -> throwError RErrorMemoryLocation
+
+
+
 evalExpr :: Expr -> Eval LKValue
 
 evalExpr (EAdd expr1 addop expr2) = do

@@ -17,7 +17,7 @@ import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Declarations
 import           Interpreter.Semantics.Domains
-import           Interpreter.Semantics.Expressions
+import           Interpreter.Semantics.Expressions as LKExpr hiding (evalExpr)
 import           Interpreter.TypesUtils
 import           Interpreter.Values
 
@@ -104,3 +104,6 @@ evalStmt (Ret expr) = evalExpr expr >>= \value -> throwError $ LKReturn (Just va
 evalStmt (Incr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ident (1 +)
 
 evalStmt (Decr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ident (1 -)
+
+evalExpr :: Expr -> Eval LKValue
+evalExpr = LKExpr.evalExprDependencyInjection [evalStmts] 
