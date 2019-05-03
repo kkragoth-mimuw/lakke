@@ -11,7 +11,7 @@ import           AbsLakke
 import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Expressions
-import           Interpreter.Utils
+import           Interpreter.DomainsUtils
 import           Interpreter.Values
 
 evalFuncDecl :: LKFunctionDef -> Eval Env

@@ -9,11 +9,6 @@ import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Domains
 
 
-newloc :: Getting (Map.Map Integer a) Store (Map.Map Integer a) -> Eval Integer
-newloc storeGetter = do
-    store <- get
-    return $ toInteger $ Map.size (store & (storeGetter & view))
-
 mapRelOpToRelFunction :: (Ord a) => RelOp -> (a -> a -> Bool)
 mapRelOpToRelFunction relOp = case relOp of
     LTH -> (<)
@@ -23,6 +18,7 @@ mapRelOpToRelFunction relOp = case relOp of
     EQU -> (==)
     NE -> (/=)
 
+    
 mapMulOpToMulFunction :: MulOp -> (Integer -> Integer -> Integer)
 mapMulOpToMulFunction mulOp = case mulOp of
     Mod -> mod

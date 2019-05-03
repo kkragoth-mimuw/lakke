@@ -1,21 +1,28 @@
 module Interpreter.DomainsUtils where
 
-import           Data.Maybe
-import           Control.Monad.Except
-import           Control.Monad.State
-import           Control.Monad.Reader
 import           Control.Lens
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Control.Monad.State
+import qualified Data.Map                      as Map
+import           Data.Maybe
 
 import           AbsLakke
 
-import           Interpreter.Semantics.Domains
-import           Interpreter.EvalMonad
 import           Interpreter.ErrorTypes
+import           Interpreter.EvalMonad
+import           Interpreter.Semantics.Domains
 import           Interpreter.Values
 
 
+newloc :: Getting (Map.Map Location a) Store (Map.Map Location a) -> Eval Integer
+newloc storeGetter = do
+    store <- get
+    return $ toInteger $ Map.size (store & (storeGetter & view))
+
+
 extractVariable :: Ident -> Eval LKValue
-extractVariable ident = extractVariableLocation ident >>= extractVariableFromStore
+extractVariable ident = extractVariableFromStore =<< extractVariableLocation ident
 
 
 extractVariableLocation :: Ident -> Eval Location
