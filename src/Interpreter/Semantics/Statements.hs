@@ -1,6 +1,8 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Interpreter.Semantics.Statements where
 
-import           Control.Lens
+import           Control.Lens                       hiding (Empty)
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
@@ -9,7 +11,7 @@ import           Data.Maybe
 
 import           AbsLakke
 
-import           Debug.Trace
+import           Interpreter.Debug
 import           Interpreter.DomainsUtils
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
@@ -27,6 +29,8 @@ evalStmts (x:xs) = do
 
 evalStmt :: Stmt -> Eval Env
 
+evalStmt Empty = ask
+evalStmt (BStmt (Block stmts)) = evalStmts stmts >> ask
 evalStmt (DeclS decl) = evalDecl decl
 evalStmt (PrintLn expr) = do
     e <- evalExpr expr
@@ -55,19 +59,52 @@ evalStmt (Incr id) = do
     loc <- extractVariableLocation ident
 
     case variable of
-        (LKInt i) -> put $ store & vars . at loc ?~ LKInt (i + 1)
+        (LKInt i) -> put $ store & (vars . at loc ?~ LKInt (i + 1))
         _         -> throwError RErrorInvalidTypeNoInfo
 
     ask
 
-evalStmt whileStmt@(While expr (Block stmts)) = do
-    e <- evalExpr expr
+evalStmt (Decr id) = do
+    ident <- evalId id
 
-    case e of
-        (LKBool True) -> do
-                         evalStmts stmts
-                         evalStmt whileStmt
-        (LKBool False) -> ask
-        _ -> throwError RErrorInvalidTypeNoInfo
+    variable <- extractVariable ident
 
+    store <- get
+
+    loc <- extractVariableLocation ident
+
+    case variable of
+        (LKInt i) -> put $ store & (vars . at loc ?~ LKInt (i - 1))
+        _         -> throwError RErrorInvalidTypeNoInfo
+
+    ask
+
+evalStmt (While expr block) = evalStmt (For Empty expr Empty block)
+
+evalStmt (For initStmt expr outerStmt block@(Block stmts)) = do
+    env <- evalStmt initStmt
+    local (const env) (
+        do
+            condition <- evalExpr expr
+            case condition of
+                (LKBool False) -> ask
+                (LKBool True) -> (do
+                     evalStmts stmts;
+                     evalStmt outerStmt;
+                     evalStmt (For Empty expr outerStmt block)
+                    ) `catchError` (\case
+                                        LKBreak -> ask
+                                        LKContinue -> do
+                                                        evalStmt outerStmt
+                                                        evalStmt (For Empty expr outerStmt block)
+                                        error -> throwError error
+                                    )
+                _ -> throwError RErrorInvalidTypeNoInfo
+        )
+
+    ask
+
+evalStmt Break = throwError LKBreak
+evalStmt Continue = throwError LKContinue
+evalStmt (SExp expr) = evalExpr expr >> ask
 evalStmt a = throwError $ REDebug $ show a

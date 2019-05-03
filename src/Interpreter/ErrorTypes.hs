@@ -11,6 +11,9 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | RErrorInvalidTypeNoInfo
                   | RErrorInvalidType Type String Expr
                   | REDebug String
+                  | LKBreak
+                  | LKContinue
+
 
 instance Show RuntimeError where
     show RErrorNoMainFunction                     = "No main function defined"
@@ -19,3 +22,5 @@ instance Show RuntimeError where
     show (RErrorInvalidType exprType reason expr) = printf "Invalid type: %s in %s. %s" (show exprType) (show expr) reason
     show RErrorInvalidTypeNoInfo                  = "Invalid type"
     show (REDebug s)                              = s
+    show LKBreak                                  = "break"
+    show LKContinue                               = "continue"

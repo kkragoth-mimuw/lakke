@@ -11,22 +11,19 @@ lkType lkValue = case lkValue of
     _            -> Void
 
 checkIfAllowedTypeOfValue :: [Type] -> LKValue -> Bool
-checkIfAllowedTypeOfValue allowedTypes value = checkIfAllowedType allowedTypes (lkType value)
+checkIfAllowedTypeOfValue allowedTypes lkValue = checkIfAllowedType allowedTypes (lkType lkValue)
 
 checkIfAllowedType :: [Type] -> Type -> Bool
 checkIfAllowedType allowedTypes type' = type' `elem` allowedTypes
 
 simpleTypes :: [Type]
-simpleTypes = undefined
+simpleTypes = [Int, Str, Bool]
 
 printValue :: LKValue -> String
 printValue _ = undefined
 
 isSimpleType :: LKValue -> Bool
-isSimpleType lkValue = case lkValue of
-    (LKInt _)    -> True
-    (LKString _) -> True
-    (LKBool _)   -> True
+isSimpleType lkValue = checkIfAllowedType simpleTypes (lkType lkValue)
 
 simpleTypeToString :: LKValue -> String
 simpleTypeToString lkValue = case lkValue of

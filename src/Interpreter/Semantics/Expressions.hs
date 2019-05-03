@@ -14,8 +14,6 @@ import           Interpreter.Values
 import           Interpreter.Utils
 
 evalExpr :: Expr -> Eval LKValue
-evalExpr (ELitInt n) = do
-    return $ LKInt n
 
 evalExpr (EAdd expr1 addop expr2) = do
     LKInt e1 <- evalExpr expr1
@@ -33,8 +31,7 @@ evalExpr (EVar id) = do
             Just var -> return var
             Nothing  -> throwError RErrorMemoryLocation
 
-evalExpr ELitTrue  = return $ LKBool True
-evalExpr ELitFalse = return $ LKBool False
+
 evalExpr rel@(ERel exprLeft relOp exprRight) = do
     eLeft <- evalExpr exprLeft
     eRight <- evalExpr exprRight
@@ -50,5 +47,11 @@ evalExpr mul@(EMul exprLeft mulOp exprRight) = do
         (LKInt l, LKInt r) -> return $ LKInt ((mapMulOpToMulFunction mulOp) l r)
         _ -> throwError $ RErrorInvalidTypeNoInfo
 
+evalExpr (EString str) = return $ LKString str
+evalExpr (ELitInt int) = return $ LKInt int
+evalExpr ELitTrue  = return $ LKBool True
+evalExpr ELitFalse = return $ LKBool False
+evalExpr a = throwError $ REDebug $ show a
 evalId :: Id -> Eval Ident
 evalId (Id n) = return n
+

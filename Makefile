@@ -3,6 +3,9 @@ run:
 	
 lint:
 	hlint src/*
+
+wc:
+	find src -name '*.hs' | xargs wc -l
 	
 generate_grammar:
 	mkdir -p generated && \
