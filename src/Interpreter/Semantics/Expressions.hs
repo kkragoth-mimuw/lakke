@@ -52,7 +52,7 @@ evalExpr (EApp lvalue exprs) = do
 
                 --  debug newEnv store
 
-                 (do local (const newEnv) (?evalStmts stmts)
+                 (do local (const (increaseLevel newEnv)) (?evalStmts stmts)
                      if returnType == Void then
                         return LKVoid
                      else
@@ -112,8 +112,11 @@ evalExpr ELitFalse = return $ LKBool False
 evalExpr a = throwError $ REDebug $ "Expr exhausted " ++show a
 
 
--- evalExpr2 :: Expr -> Expr -> (LKValue, LKValue)
--- evalExpr2 leftExpr rightExpr = (evalExpr leftExpr, evalExpr rightExpr)
+evalExpr2 :: (?evalStmts :: [Stmt] -> Eval ()) =>  Expr -> Expr -> Eval (LKValue, LKValue)
+evalExpr2 leftExpr rightExpr = do 
+    leftValue  <- evalExpr leftExpr 
+    rightValue <- evalExpr rightExpr
+    return (leftValue, rightValue)
 
 
 evalLValue :: LValue -> Eval Ident

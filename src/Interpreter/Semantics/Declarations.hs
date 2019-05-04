@@ -11,10 +11,12 @@ import           Data.Map                          as Map
 
 import           AbsLakke
 import           Interpreter.EvalMonad
+import           Interpreter.ErrorTypes
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Expressions
 import           Interpreter.DomainsUtils
 import           Interpreter.Values
+import           Interpreter.TypesUtils
 
 evalFuncDecl :: LKFunctionDef -> Eval Env
 evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
@@ -37,16 +39,21 @@ evalDeclDependencyInjection :: ([Stmt] -> Eval ()) -> Stmt -> Eval Env
 evalDeclDependencyInjection evalStmts stmt = let ?evalStmts = evalStmts in evalDecl stmt
 
 evalDecl :: (?evalStmts :: [Stmt] -> Eval ()) => Stmt -> Eval Env
-evalDecl (DeclS (Decl type_ item)) = evalItem item
+evalDecl (DeclS (Decl type_ item)) = evalItem type_ item
 evalDecl (ArrayDecl arrayType expr ident) = undefined
 evalDecl (Struct structDecl) = undefined
 evalDecl _ = ask
 
 
-evalItem :: (?evalStmts :: [Stmt] -> Eval ()) => Item -> Eval Env
-evalItem (Init lvalue expr) = do
+evalItem :: (?evalStmts :: [Stmt] -> Eval ()) => Type -> Item -> Eval Env
+evalItem type_ (Init lvalue expr) = do
   value <- evalExpr expr
   name <- evalLValue lvalue
+
+  checkIfIsAlreadyDeclaredAtCurrentLevel name
+
+  when (type_ /= lkType value) 
+    (throwError RErrorInvalidTypeNoInfo)
 
   store <- get
 

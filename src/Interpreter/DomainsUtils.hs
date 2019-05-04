@@ -84,3 +84,15 @@ getLevel env = env ^. level
 
 increaseLevel :: Env -> Env
 increaseLevel env = env &  (level +~ 1)
+
+checkIfIsAlreadyDeclaredAtCurrentLevel :: Ident -> Eval ()
+checkIfIsAlreadyDeclaredAtCurrentLevel ident = do
+    env <- ask
+
+    let currentLevel = getLevel env
+
+    let maybeLocation = env ^. varsEnv . at ident
+
+    case maybeLocation of
+        Just (_, levelDeclared) | levelDeclared >= currentLevel -> throwError $ RERedeclaration ident      
+        _ -> return ()

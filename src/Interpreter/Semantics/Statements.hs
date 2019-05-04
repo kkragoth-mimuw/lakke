@@ -93,7 +93,7 @@ evalStmt Continue = throwError LKContinue
 
 evalStmt (SExp expr) = void $ evalExpr expr
 
-evalStmt (BStmt (Block stmts)) = evalStmts stmts
+evalStmt (BStmt (Block stmts)) = local increaseLevel (evalStmts stmts)
 
 evalStmt VRet = throwError $ LKReturn Nothing
 

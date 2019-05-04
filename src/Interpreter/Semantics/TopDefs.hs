@@ -9,6 +9,9 @@ import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Statements
 import           Interpreter.Values
 
+-- Note: evalDecl is imported from Interpreter.Semantics.Statements
+--       and not from Interpreter.Semantics.Declarations
+
 evalTopDefs :: [TopDef] -> Eval Env
 evalTopDefs [] = ask
 evalTopDefs (x:xs) = do
