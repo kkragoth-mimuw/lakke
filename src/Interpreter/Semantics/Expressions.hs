@@ -101,16 +101,43 @@ evalExpr rel@(ERel exprLeft relOp exprRight) = do
 evalExpr mul@(EMul exprLeft mulOp exprRight) = do
     eLeft <- evalExpr exprLeft
     eRight <- evalExpr exprRight
-    case (eLeft, eRight) of
-        (LKInt l, LKInt r) -> return $ LKInt ((mapMulOpToMulFunction mulOp) l r)
+    case (eLeft, eRight, mulOp) of
+        (LKInt l, LKInt 0, Div ) -> throwError $ RErrorDivisonByZero
+        (LKInt l, LKInt r, _) -> return $ LKInt ((mapMulOpToMulFunction mulOp) l r)
         _ -> throwError $ RErrorInvalidTypeNoInfo
 
 evalExpr (EString str) = return $ LKString str
 evalExpr (ELitInt int) = return $ LKInt int
 evalExpr ELitTrue  = return $ LKBool True
 evalExpr ELitFalse = return $ LKBool False
-evalExpr a = throwError $ REDebug $ "Expr exhausted " ++show a
 
+evalExpr (Neg expr) = do
+    var <- evalExpr expr
+    case var of 
+        (LKInt value) -> return $ LKInt (negate value)
+        _ -> throwError $ RErrorInvalidTypeNoInfo
+
+evalExpr (Not expr) = do
+    cond <- evalExpr expr
+    case cond of
+        (LKBool value) -> return $ LKBool (not value)
+        _ -> throwError $ RErrorInvalidTypeNoInfo
+
+evalExpr (EAnd expr1 expr2) = do
+    (left, right) <- evalExpr2 expr1 expr2
+    case (left, right) of
+        (LKBool True, LKBool True) -> return $ LKBool True
+        (LKBool _, LKBool _) -> return $ LKBool False
+        _ -> throwError $ RErrorInvalidTypeNoInfo
+
+evalExpr (EOr expr1 expr2) = do
+    (left, right) <- evalExpr2 expr1 expr2
+    case (left, right) of
+        (LKBool False, LKBool False) -> return $ LKBool False
+        (LKBool _, LKBool _) -> return $ LKBool True
+        _ -> throwError $ RErrorInvalidTypeNoInfo
+
+evalExpr a = throwError $ REDebug $ "Expr exhausted " ++show a
 
 evalExpr2 :: (?evalStmts :: [Stmt] -> Eval ()) =>  Expr -> Expr -> Eval (LKValue, LKValue)
 evalExpr2 leftExpr rightExpr = do 
