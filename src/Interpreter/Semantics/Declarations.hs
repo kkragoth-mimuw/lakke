@@ -24,7 +24,7 @@ evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
   i <- newloc funcDefs
 
   put (store & (funcDefs . at i ?~ func))
-  return (env  & (funcsEnv . at fnName ?~ i))
+  return (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
 
 isStmtDeclaration :: Stmt -> Bool
 isStmtDeclaration stmt = case stmt of
@@ -56,4 +56,4 @@ evalItem (Init lvalue expr) = do
 
   env <- ask
 
-  return (env & (varsEnv . at name ?~ i))
+  return (env & (varsEnv . at name ?~ (i, getLevel env)))

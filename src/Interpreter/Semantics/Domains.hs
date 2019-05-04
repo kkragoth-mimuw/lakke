@@ -10,10 +10,12 @@ import           AbsLakke
 import           Interpreter.Values
 
 type Location = Integer
+type EnvLevel    = Integer
 
-data Env   = Env   {    _varsEnv :: Map.Map Ident Location
-                   ,   _funcsEnv :: Map.Map Ident Location
-                   , _structsEnv :: Map.Map Ident Location
+data Env   = Env   {    _varsEnv :: Map.Map Ident (Location, EnvLevel)
+                   ,   _funcsEnv :: Map.Map Ident (Location, EnvLevel)
+                   , _structsEnv :: Map.Map Ident (Location, EnvLevel)
+                   ,      _level :: EnvLevel
                    } deriving (Show)
 
 data Store = Store {       _vars :: Map.Map Location LKValue
@@ -24,6 +26,7 @@ data Store = Store {       _vars :: Map.Map Location LKValue
 initEnv   = Env   {    _varsEnv        = Map.empty
                   ,   _funcsEnv        = Map.empty
                   , _structsEnv        = Map.empty
+                  ,      _level        = 0
                   }
 
 initStore = Store {       _vars       = Map.empty

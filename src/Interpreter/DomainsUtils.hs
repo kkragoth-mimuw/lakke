@@ -34,7 +34,7 @@ extractVariableLocation ident = do
     when (isNothing maybeLocation)
         (throwError $ RErrorUnknownIdentifier (show ident))
 
-    return $ fromJust maybeLocation
+    return $ fst $ fromJust maybeLocation
 
 
 extractVariableFromStore :: Location -> Eval LKValue
@@ -78,3 +78,9 @@ copySimpleVariable value = do
     put $ store & (vars . at i ?~ value)
 
     return i
+
+getLevel :: Env -> EnvLevel
+getLevel env = env ^. level
+
+increaseLevel :: Env -> Env
+increaseLevel env = env &  (level +~ 1)

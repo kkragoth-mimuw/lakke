@@ -27,7 +27,7 @@ getIdentFromArg (VArg _ ident) = ident
 getIdentFromArg (RArg _ ident) = ident
 
 updateEnv :: (Location, Ident) -> Env -> Env
-updateEnv (location, ident) env = env & (varsEnv . at ident ?~ location)
+updateEnv (location, ident) env = env & (varsEnv . at ident ?~ (location, getLevel env))
 
 evalExpr :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval LKValue
 evalExpr (EApp lvalue exprs) = do
@@ -39,7 +39,7 @@ evalExpr (EApp lvalue exprs) = do
     suppliedArgs <- mapM evalExpr exprs
     case (env & (funcsEnv & view)) ^.at ident of
         Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
-        Just loc -> case (store & (funcDefs & view)) ^.at loc of
+        Just (loc, _) -> case (store & (funcDefs & view)) ^.at loc of
             Just (LKFunctionDef returnType ident args (Block stmts)) -> do
                  newLocs <- Prelude.mapM copySimpleVariable suppliedArgs
                  let idents = Prelude.map getIdentFromArg args
@@ -85,7 +85,7 @@ evalExpr (EVar lvalue) = do
 
     case (env & (varsEnv & view)) ^.at ident of
         Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
-        Just loc -> case (store & (vars & view)) ^.at loc of
+        Just (loc, _) -> case (store & (vars & view)) ^.at loc of
             Just var -> return var
             Nothing  -> throwError RErrorMemoryLocation
 
@@ -110,6 +110,12 @@ evalExpr (ELitInt int) = return $ LKInt int
 evalExpr ELitTrue  = return $ LKBool True
 evalExpr ELitFalse = return $ LKBool False
 evalExpr a = throwError $ REDebug $ "Expr exhausted " ++show a
+
+
+-- evalExpr2 :: Expr -> Expr -> (LKValue, LKValue)
+-- evalExpr2 leftExpr rightExpr = (evalExpr leftExpr, evalExpr rightExpr)
+
+
 evalLValue :: LValue -> Eval Ident
 evalLValue (LValue n) = return n
 
