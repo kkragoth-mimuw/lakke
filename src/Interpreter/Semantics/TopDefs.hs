@@ -4,7 +4,6 @@ import           Control.Monad.Reader
 
 import           AbsLakke
 import           Interpreter.EvalMonad
-import           Interpreter.Semantics.Declarations (evalFuncDecl)
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Statements
 import           Interpreter.Values
@@ -19,5 +18,6 @@ evalTopDefs (x:xs) = do
     local (const env) (evalTopDefs xs)
 
 evalTopDef :: TopDef -> Eval Env
-evalTopDef (Global decl)                          = evalDecl (DeclS decl)
-evalTopDef fnDef@(FnDef fnType fnName args block) = evalFuncDecl $ LKFunctionDef fnType fnName args block
+evalTopDef (Global decl) = evalDecl (DeclS decl)
+evalTopDef (FnDef fnDef) = evalDecl (DeclF fnDef)
+-- evalTopDef fnDef@(FnDef fnType fnName args block) = evalDecl $ DeclF (LKFunctionDef fnType fnName args block)

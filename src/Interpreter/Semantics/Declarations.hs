@@ -18,21 +18,22 @@ import           Interpreter.DomainsUtils
 import           Interpreter.Values
 import           Interpreter.TypesUtils
 
-evalFuncDecl :: LKFunctionDef -> Eval Env
-evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
-  store <- get
-  env <- ask
+-- evalFuncDecl :: LKFunctionDef -> Eval Env
+-- evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
+--   store <- get
+--   env <- ask
 
-  i <- newloc funcDefs
+--   i <- newloc funcDefs
 
-  put (store & (funcDefs . at i ?~ func))
-  return (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
+--   put (store & (funcDefs . at i ?~ func))
+--   return (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
 
 isStmtDeclaration :: Stmt -> Bool
 isStmtDeclaration stmt = case stmt of
     (DeclS _ ) -> True
     (ArrayDecl _ _ _ ) -> True
     (Struct _ ) -> True
+    (DeclF _ ) -> True
     _ -> False
 
 evalDeclDependencyInjection :: ([Stmt] -> Eval ()) -> Stmt -> Eval Env
@@ -42,6 +43,16 @@ evalDecl :: (?evalStmts :: [Stmt] -> Eval ()) => Stmt -> Eval Env
 evalDecl (DeclS (Decl type_ item)) = evalItem type_ item
 evalDecl (ArrayDecl arrayType expr ident) = undefined
 evalDecl (Struct structDecl) = undefined
+evalDecl (DeclF (FNDef fnType fnName args block)) = do
+  store <- get
+  env <- ask
+
+  i <- newloc funcDefs
+
+  let func = LKFunctionDef fnType fnName args block
+
+  put (store & (funcDefs . at i ?~ func))
+  return (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
 evalDecl _ = ask
 
 

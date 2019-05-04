@@ -4,7 +4,7 @@ entrypoints Program ;
 
 Program.    Program ::= [TopDef] ;
 
-FnDef.	    TopDef ::= Type Ident "(" [Arg] ")" Block ;
+FnDef.	    TopDef ::= FNDef1 ;
 
 StructDef.  TopDef ::= StructDecl ; 
 
@@ -30,9 +30,13 @@ BStmt.     Stmt ::= Block ;
 
 DeclS.     Stmt ::= Decl ;
 
+DeclF.     Stmt ::= FNDef ;
+
 Decl.      Decl ::= Type Item ";" ;
 
 SDecl.     SDeclItem ::= Type Ident;
+
+FNDef.     FNDef ::= Type Ident "(" [Arg] ")" Block ;
 
 ArrayDecl. Stmt ::= Type "[" Expr "]" Ident;
 
