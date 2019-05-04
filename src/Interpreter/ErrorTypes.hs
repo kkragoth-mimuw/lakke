@@ -13,6 +13,7 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | RErrorInvalidTypeNoInfo
                   | RErrorInvalidType Type String Expr
                   | REValueIsNotPrintable
+                  | REErrorCast
                   | RENoReturnValue
                   | RERedeclaration Ident
                   | REDebug String
@@ -26,6 +27,7 @@ instance Show RuntimeError where
     show (RErrorUnknownIdentifier identifier)     = "Unknown identifier " ++ identifier
     show RErrorMemoryLocation                     = "Location not in store"
     show RErrorDivisonByZero                      = "Division by zero"
+    show REErrorCast                              = "Error in cast"
     show (RErrorInvalidType exprType reason expr) = printf "Invalid type: %s in %s. %s" (show exprType) (show expr) reason
     show RErrorInvalidTypeNoInfo                  = "Invalid type"
     show REValueIsNotPrintable                    = "Unable to print value"
