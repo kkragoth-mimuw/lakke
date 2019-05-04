@@ -1,0 +1,12 @@
+void f(int & x, int y) {
+        x++;
+        y++;
+}
+
+int main() {
+        int n = 0;
+        int k = 0;
+        f(n, k);
+        print(n);
+        print(k);
+}

@@ -46,31 +46,45 @@ evalExpr (EApp lvalue exprs) = do
     ident <- evalLValue lvalue
 
     suppliedArgs <- mapM evalExpr exprs
+
     case (env & (funcsEnv & view)) ^.at ident of
         Nothing -> throwError $ RErrorUnknownIdentifier (show ident)
         Just (loc, _) -> case (store & (funcDefs & view)) ^.at loc of
             Just (LKFunctionDef returnType ident args (Block stmts)) -> do
-                 newLocs <- Prelude.mapM copySimpleVariable suppliedArgs
-
-                 unless (length suppliedArgs == length args)
+            
+                unless (length suppliedArgs == length args)
                     (throwError REInvalidNumberOfArgumentsSupplied)
 
-                 unless (all (\(suppliedArg, functionArg) -> (lkType suppliedArg == getTypeFromArg functionArg)) (zip suppliedArgs args))
+                unless (all (\(suppliedArg, functionArg) -> (lkType suppliedArg == getTypeFromArg functionArg)) (zip suppliedArgs args))
                     (throwError RErrorInvalidTypeNoInfo)
-                 let idents = Prelude.map getIdentFromArg args
 
-                 let newEnv = foldr updateEnv env (zip newLocs idents)
+                let vargs = Prelude.filter (\(_, functionArg) -> isVArg functionArg) (zip exprs args)
+                let vFargs = Prelude.map snd vargs
+                
+                vSuppliedArgs <- Prelude.mapM (evalExpr . fst) vargs
 
-                --  traceM $ show newLocs
+                let vIdents = Prelude.map getIdentFromArg vFargs
+                newVLocs <- Prelude.mapM copySimpleVariable vSuppliedArgs
+                let newVEnv = foldr updateEnv env (zip newVLocs vIdents)
 
-                 store <- get
+                let rargs = Prelude.filter (\(_, functionArg) -> not $ isVArg functionArg) (zip exprs args)
+                let rFargs = Prelude.map snd rargs
+                rSuppliedArgs <- Prelude.mapM (evalExprToIdent . fst) rargs
+                let rIdents = Prelude.map getIdentFromArg rFargs
+                newRLocs <- Prelude.mapM extractVariableLocation rSuppliedArgs
+                let newREnv = foldr updateEnv newVEnv (zip newRLocs rIdents)
 
-                --  debug newEnv store
+                -- traceM $ show rargs
+                -- traceM $ show newRLocs
+                -- traceM $ show rIdents
 
-                 (do local (const (increaseLevel newEnv)) (?evalStmts stmts)
-                     if returnType == Void then
+                -- store <- get
+                -- debug newREnv store
+
+                (do local (const (increaseLevel newREnv)) (?evalStmts stmts)
+                    if returnType == Void then
                         return LKVoid
-                     else
+                    else
                         throwError RENoReturnValue
                   )
                  `catchError` (
@@ -172,6 +186,9 @@ evalExpr2 leftExpr rightExpr = do
     rightValue <- evalExpr rightExpr
     return (leftValue, rightValue)
 
+evalExprToIdent :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval Ident
+evalExprToIdent (EVar lvalue) = evalLValue lvalue
+evalExprToIdent _ = throwError RENotLValue
 
 evalLValue :: LValue -> Eval Ident
 evalLValue (LValue n) = return n

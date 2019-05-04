@@ -15,6 +15,7 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | REValueIsNotPrintable
                   | REErrorCast
                   | RENoReturnValue
+                  | RENotLValue
                   | RERedeclaration Ident
                   | REInvalidNumberOfArgumentsSupplied
                   | REDebug String
@@ -35,5 +36,6 @@ instance Show RuntimeError where
     show (RERedeclaration (Ident ident))          = "Redeclaration of: " ++ ident
     show RENoReturnValue                          = "No return value"
     show (REDebug s)                              = s
+    show RENotLValue                              = "Not LValue"
     show LKBreak                                  = "break"
     show LKContinue                               = "continue"
