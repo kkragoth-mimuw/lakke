@@ -15,7 +15,7 @@ import           Interpreter.Debug
 import           Interpreter.DomainsUtils
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
-import           Interpreter.Semantics.Declarations
+import           Interpreter.Semantics.Declarations as LKDecl hiding (evalDecl, evalExpr)
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Expressions as LKExpr hiding (evalExpr)
 import           Interpreter.TypesUtils
@@ -30,11 +30,11 @@ evalStmts (x:xs) = do
 
 
 evalStmtOrDeclaration :: Stmt -> Eval Env
-evalStmtOrDeclaration stmt = case stmt of
-    (DeclS decl) -> evalDecl decl
-    (ArrayDecl arrayType expr ident) -> evalArrayDecl arrayType expr ident
-    (Struct structDecl) -> evalStructDecl structDecl
-    _ -> evalStmt stmt >> ask
+evalStmtOrDeclaration stmt = 
+    if LKDecl.isStmtDeclaration stmt then
+        evalDecl stmt
+    else
+        evalStmt stmt >> ask
 
 
 evalStmt :: Stmt -> Eval ()
@@ -106,4 +106,7 @@ evalStmt (Incr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ide
 evalStmt (Decr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ident (1 -)
 
 evalExpr :: Expr -> Eval LKValue
-evalExpr = LKExpr.evalExprDependencyInjection [evalStmts] 
+evalExpr = LKExpr.evalExprDependencyInjection evalStmts 
+
+evalDecl :: Stmt -> Eval Env
+evalDecl = LKDecl.evalDeclDependencyInjection evalStmts

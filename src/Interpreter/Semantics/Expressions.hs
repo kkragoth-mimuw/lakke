@@ -1,4 +1,4 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase, ImplicitParams #-}
 
 module Interpreter.Semantics.Expressions where
 
@@ -19,9 +19,8 @@ import           Interpreter.Semantics.Domains
 import           Interpreter.Values
 import           Interpreter.Utils
 
-evalExprDependencyInjection :: [[Stmt] -> Eval ()] -> Expr -> Eval LKValue
-evalExprDependencyInjection [evalStmts] (EApp lvalue args) = applyFunction evalStmts lvalue args
-evalExprDependencyInjection _ expr = evalExpr expr
+evalExprDependencyInjection :: ([Stmt] -> Eval ()) -> Expr -> Eval LKValue
+evalExprDependencyInjection evalStmts expr = let ?evalStmts = evalStmts in evalExpr expr
 
 getIdentFromArg :: Arg -> Ident
 getIdentFromArg (VArg _ ident) = ident
@@ -30,8 +29,9 @@ getIdentFromArg (RArg _ ident) = ident
 updateEnv :: (Location, Ident) -> Env -> Env
 updateEnv (location, ident) env = env & (varsEnv . at ident ?~ location)
 
-applyFunction :: ([Stmt] -> Eval ()) -> LValue -> [Expr] -> Eval LKValue
-applyFunction evalStmts lvalue exprs = do
+evalExpr :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval LKValue
+evalExpr (EApp lvalue exprs) = do
+    let ?evalStmts = ?evalStmts
     env <- ask
     store <- get
     ident <- evalLValue lvalue
@@ -52,7 +52,7 @@ applyFunction evalStmts lvalue exprs = do
 
                 --  debug newEnv store
 
-                 (do local (const newEnv) (evalStmts stmts)
+                 (do local (const newEnv) (?evalStmts stmts)
                      if returnType == Void then
                         return LKVoid
                      else
@@ -70,9 +70,6 @@ applyFunction evalStmts lvalue exprs = do
                   )
             Nothing  -> throwError RErrorMemoryLocation
 
-
-
-evalExpr :: Expr -> Eval LKValue
 
 evalExpr (EAdd expr1 addop expr2) = do
     LKInt e1 <- evalExpr expr1

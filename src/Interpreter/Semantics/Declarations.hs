@@ -1,3 +1,5 @@
+{-# LANGUAGE ImplicitParams #-}
+
 module Interpreter.Semantics.Declarations where
 
 import           Control.Lens
@@ -24,16 +26,24 @@ evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
   put (store & (funcDefs . at i ?~ func))
   return (env  & (funcsEnv . at fnName ?~ i))
 
-evalDecl :: Decl -> Eval Env
-evalDecl (Decl type_ item) = evalItem item
+isStmtDeclaration :: Stmt -> Bool
+isStmtDeclaration stmt = case stmt of
+    (DeclS _ ) -> True
+    (ArrayDecl _ _ _ ) -> True
+    (Struct _ ) -> True
+    _ -> False
 
-evalArrayDecl :: Type -> Expr -> Ident -> Eval Env
-evalArrayDecl arrayType expr ident = undefined
+evalDeclDependencyInjection :: ([Stmt] -> Eval ()) -> Stmt -> Eval Env
+evalDeclDependencyInjection evalStmts stmt = let ?evalStmts = evalStmts in evalDecl stmt
 
-evalStructDecl :: StructDecl -> Eval Env
-evalStructDecl structDecl = undefined
+evalDecl :: (?evalStmts :: [Stmt] -> Eval ()) => Stmt -> Eval Env
+evalDecl (DeclS (Decl type_ item)) = evalItem item
+evalDecl (ArrayDecl arrayType expr ident) = undefined
+evalDecl (Struct structDecl) = undefined
+evalDecl _ = ask
 
-evalItem :: Item -> Eval Env
+
+evalItem :: (?evalStmts :: [Stmt] -> Eval ()) => Item -> Eval Env
 evalItem (Init lvalue expr) = do
   value <- evalExpr expr
   name <- evalLValue lvalue
