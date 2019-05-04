@@ -1,11 +1,11 @@
-void test() {
-	void nested_test() {
-		print("Hello from nested");
+int f(int x) {
+	int f2(int y) {
+		return x + y;
 	}
 
-	nested_test();
+	return f2(5);
 }
 
 int main() {
-	test();
+	print(f(2));
 }
