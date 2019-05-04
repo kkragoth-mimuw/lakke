@@ -27,6 +27,14 @@ getIdentFromArg :: Arg -> Ident
 getIdentFromArg (VArg _ ident) = ident
 getIdentFromArg (RArg _ ident) = ident
 
+getTypeFromArg :: Arg -> Type
+getTypeFromArg (VArg type_ _) = type_
+getTypeFromArg (RArg type_ _) = type_
+
+isVArg :: Arg -> Bool
+isVArg (VArg _ _) = True
+isVArg _ = False
+
 updateEnv :: (Location, Ident) -> Env -> Env
 updateEnv (location, ident) env = env & (varsEnv . at ident ?~ (location, getLevel env))
 
@@ -43,6 +51,12 @@ evalExpr (EApp lvalue exprs) = do
         Just (loc, _) -> case (store & (funcDefs & view)) ^.at loc of
             Just (LKFunctionDef returnType ident args (Block stmts)) -> do
                  newLocs <- Prelude.mapM copySimpleVariable suppliedArgs
+
+                 unless (length suppliedArgs == length args)
+                    (throwError REInvalidNumberOfArgumentsSupplied)
+
+                 unless (all (\(suppliedArg, functionArg) -> (lkType suppliedArg == getTypeFromArg functionArg)) (zip suppliedArgs args))
+                    (throwError RErrorInvalidTypeNoInfo)
                  let idents = Prelude.map getIdentFromArg args
 
                  let newEnv = foldr updateEnv env (zip newLocs idents)

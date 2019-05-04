@@ -16,6 +16,7 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | REErrorCast
                   | RENoReturnValue
                   | RERedeclaration Ident
+                  | REInvalidNumberOfArgumentsSupplied
                   | REDebug String
                   | LKBreak
                   | LKContinue
