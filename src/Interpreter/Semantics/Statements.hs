@@ -17,7 +17,7 @@ import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Declarations as LKDecl hiding (evalDecl, evalExpr)
 import           Interpreter.Semantics.Domains
-import           Interpreter.Semantics.Expressions as LKExpr hiding (evalExpr)
+import           Interpreter.Semantics.Expressions  as LKExpr hiding (evalExpr)
 import           Interpreter.TypesUtils
 import           Interpreter.Values
 
@@ -30,7 +30,7 @@ evalStmts (x:xs) = do
 
 
 evalStmtOrDeclaration :: Stmt -> Eval Env
-evalStmtOrDeclaration stmt = 
+evalStmtOrDeclaration stmt =
     if LKDecl.isStmtDeclaration stmt then
         evalDecl stmt
     else
@@ -51,25 +51,20 @@ evalStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
 evalStmt (While expr block) = evalStmt (For Empty expr Empty block)
 
 evalStmt (For initStmt expr outerStmt block@(Block stmts)) = do
+    let evalForLoopStep       = evalStmts stmts >> evalStmt outerStmt
+    let recursiveEvalLoopBody = evalStmt (For Empty expr outerStmt block)
+
     env <- evalStmtOrDeclaration initStmt
     local (const env) (
         do
             condition <- evalExpr expr
             case condition of
                 (LKBool False) -> return ()
-                (LKBool True) -> (
-                    do
-                                evalStmts stmts
-                                evalStmt outerStmt
-                                evalStmt (For Empty expr outerStmt block)
-                    ) `catchError` (
-                        \case
-                                        LKBreak -> return ()
-                                        LKContinue -> do
-                                                    evalStmt outerStmt
-                                                    evalStmt (For Empty expr outerStmt block)
-                                        error -> throwError error
-                                    )
+                (LKBool True) -> (evalForLoopStep >> recursiveEvalLoopBody)
+                    `catchError` \case
+                                    LKContinue -> evalStmt outerStmt >> recursiveEvalLoopBody
+                                    LKBreak -> return ()
+                                    error -> throwError error
                 _ -> throwError RErrorInvalidTypeNoInfo
         )
 
@@ -81,7 +76,7 @@ evalStmt (Ass lvalue expr) = do
 
     if lkType variable == lkType rvalue then
         assignVariable ident rvalue
-    else 
+    else
         throwError RErrorInvalidTypeNoInfo
 
 
@@ -106,7 +101,7 @@ evalStmt (Incr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ide
 evalStmt (Decr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ident (1 -)
 
 evalExpr :: Expr -> Eval LKValue
-evalExpr = LKExpr.evalExprDependencyInjection evalStmts 
+evalExpr = LKExpr.evalExprDependencyInjection evalStmts
 
 evalDecl :: Stmt -> Eval Env
 evalDecl = LKDecl.evalDeclDependencyInjection evalStmts
