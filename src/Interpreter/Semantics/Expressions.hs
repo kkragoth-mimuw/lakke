@@ -23,6 +23,7 @@ import           Interpreter.Semantics.Domains
 import           Interpreter.TypesUtils
 import           Interpreter.Utils
 import           Interpreter.Values
+import           Interpreter.FuncUtils
 
 evalExprDependencyInjection :: ([Stmt] -> Eval ()) -> Expr -> Eval LKValue
 evalExprDependencyInjection evalStmts expr = let ?evalStmts = evalStmts in evalExpr expr
@@ -43,22 +44,8 @@ evalExpr (EApp lvalue exprs) = do
 
     updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env exprs args
 
-    (do local (const (increaseLevel updatedEnv)) (?evalStmts stmts)
-        if returnType == Void then
-            return LKVoid
-        else
-            throwError RENoReturnValue
-        )
-        `catchError` (
-            \case
-            LKReturn value -> case value of
-                                Just returnValue -> return returnValue
-                                Nothing -> if returnType == Void then
-                                                return LKVoid
-                                            else
-                                                throwError RENoReturnValue
-            error -> throwError error
-        )
+    local (const (increaseLevel updatedEnv)) (?evalStmts stmts >> checkIfFunctionShouldReturnSomething returnType)
+             `catchError` catchReturn returnType
 
 
 evalExpr (ECast type_  expr) = do

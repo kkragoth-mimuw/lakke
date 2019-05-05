@@ -11,6 +11,7 @@ import           Interpreter.Debug
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
 import           Interpreter.Values
+import           Interpreter.FuncUtils
 
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Statements
@@ -35,5 +36,5 @@ runMainBlock env store =
     Nothing -> throwError $ RErrorNoMainFunction
     Just (loc, 0) -> case (store & (funcDefs & view)) ^.at loc of
       Nothing                                  -> throwError RErrorNoMainFunction
-      Just ((LKFunctionDef _ _ _ (Block stmts)), mainEnv) -> local (const mainEnv) (evalStmts stmts)
+      Just ((LKFunctionDef argType _ _ (Block stmts)), mainEnv) -> local (const mainEnv) (evalStmts stmts) `catchError` catchReturnMain argType
     Just (loc, _) -> throwError $ RErrorNoMainFunction

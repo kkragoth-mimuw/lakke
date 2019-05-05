@@ -39,3 +39,4 @@ instance Show RuntimeError where
     show RENotLValue                              = "Not LValue"
     show LKBreak                                  = "break"
     show LKContinue                               = "continue"
+    show (LKReturn value)                         = "Invalid return value " ++ show value
