@@ -86,7 +86,7 @@ evalStmt Break = throwError LKBreak
 
 evalStmt Continue = throwError LKContinue
 
-evalStmt (SExp expr) = void $ evalExpr expr
+evalStmt (SExp expr) = evalExpr expr >> return ()
 
 evalStmt (BStmt (Block stmts)) = local increaseLevel (evalStmts stmts)
 
