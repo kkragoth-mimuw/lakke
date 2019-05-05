@@ -18,15 +18,18 @@ import           Interpreter.DomainsUtils
 import           Interpreter.Values
 import           Interpreter.TypesUtils
 
--- evalFuncDecl :: LKFunctionDef -> Eval Env
--- evalFuncDecl func@(LKFunctionDef fnType fnName args block) = do
+-- DYNAMIC
+-- evalDecl (DeclF (FNDef fnType fnName args block)) = do
 --   store <- get
 --   env <- ask
 
 --   i <- newloc funcDefs
 
+--   let func = LKFunctionDef fnType fnName args block
+
 --   put (store & (funcDefs . at i ?~ func))
 --   return (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
+-- evalDecl _ = ask
 
 isStmtDeclaration :: Stmt -> Bool
 isStmtDeclaration stmt = case stmt of
@@ -51,8 +54,9 @@ evalDecl (DeclF (FNDef fnType fnName args block)) = do
 
   let func = LKFunctionDef fnType fnName args block
 
-  put (store & (funcDefs . at i ?~ func))
-  return (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
+  let newEnv = (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
+  put (store & (funcDefs . at i ?~ (func, newEnv) ))
+  return newEnv -- (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
 evalDecl _ = ask
 
 

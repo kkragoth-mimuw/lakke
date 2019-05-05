@@ -1,13 +1,5 @@
 int N = 9;
  
-int main()
-{
-   for (int i = 1 ; i <= N ; i++; )
-   {
-      print(fibonacci(i));
-   }
-}
- 
 int fibonacci(int n)
 {
    if ( n == 0 ) {
@@ -21,3 +13,11 @@ int fibonacci(int n)
        }
    }
 } 
+
+int main()
+{
+   for (int i = 1 ; i <= N ; i++; )
+   {
+      print(fibonacci(i));
+   }
+}
