@@ -49,6 +49,35 @@ extractVariableFromStore location = do
     return $ fromJust maybeValue
 
 
+extractFunction :: Ident -> Eval LKFunctionDef
+extractFunction ident = extractFunctionFromStore =<< extractFunctionLocation ident
+
+
+extractFunctionLocation :: Ident -> Eval Location
+extractFunctionLocation ident = do
+    env <- ask
+
+    let maybeLocation = env ^. funcsEnv . at ident
+
+    when (isNothing maybeLocation)
+        (throwError $ RErrorUnknownIdentifier (show ident))
+
+    return $ fst $ fromJust maybeLocation
+
+
+extractFunctionFromStore :: Location -> Eval LKFunctionDef
+extractFunctionFromStore location = do
+    store <- get
+
+    let maybeValue = store ^. funcDefs . at location
+
+    when (isNothing maybeValue)
+        (throwError RErrorMemoryLocation)
+
+    return $ fromJust maybeValue
+
+
+
 assignVariable :: Ident -> LKValue -> Eval ()
 assignVariable ident value = do
     store <- get
@@ -69,6 +98,7 @@ overIntegerVariable ident f = do
         (LKInt i) -> assignVariable ident (LKInt (f i))
         _         -> throwError RErrorInvalidTypeNoInfo
 
+
 copySimpleVariable :: LKValue -> Eval Location
 copySimpleVariable value = do
     i <- newloc vars
@@ -79,11 +109,18 @@ copySimpleVariable value = do
 
     return i
 
+
+updateEnv :: (Location, Ident) -> Env -> Env
+updateEnv (location, ident) env = env & (varsEnv . at ident ?~ (location, getLevel env))
+
+
 getLevel :: Env -> EnvLevel
 getLevel env = env ^. level
 
+
 increaseLevel :: Env -> Env
 increaseLevel env = env &  (level +~ 1)
+
 
 checkIfIsAlreadyDeclaredAtCurrentLevel :: Ident -> Eval ()
 checkIfIsAlreadyDeclaredAtCurrentLevel ident = do
