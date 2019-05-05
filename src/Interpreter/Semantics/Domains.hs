@@ -19,7 +19,7 @@ data Env   = Env   {    _varsEnv :: Map.Map Ident (Location, EnvLevel)
                    } deriving (Show)
 
 data Store = Store {       _vars :: Map.Map Location LKValue
-                   ,   _funcDefs :: Map.Map Location LKFunctionDef
+                   ,   _funcDefs :: Map.Map Location (LKFunctionDef, Env)
                    , _structDefs :: Map.Map Location LKStructDef
                    } deriving (Show)
 
@@ -33,6 +33,23 @@ initStore = Store {       _vars       = Map.empty
                   ,   _funcDefs       = Map.empty
                   , _structDefs       = Map.empty
                   }
+
+data LKValue  = LKInt Integer
+              | LKBool Bool
+              | LKString String
+              | LKFunction LKFunctionDef
+              | LKStruct LKStructDef (Map.Map Ident LKValue)
+              | LKVoid
+              deriving (Show)
+
+
+data LKFunctionDef = LKFunctionDef Type Ident [Arg] Block
+                    deriving (Show)
+
+
+newtype LKStructDef = LKStructDef (Map.Map Ident Type)
+                deriving (Show)
+
 
 makeLenses ''Env
 makeLenses ''Store

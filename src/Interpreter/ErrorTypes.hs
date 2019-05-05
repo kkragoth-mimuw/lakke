@@ -4,7 +4,7 @@ import           Text.Printf
 
 import           AbsLakke
 
-import           Interpreter.Values
+import           Interpreter.Semantics.Domains
 
 data RuntimeError = RErrorUnknownIdentifier String
                   | RErrorDivisonByZero

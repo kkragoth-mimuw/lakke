@@ -35,5 +35,5 @@ runMainBlock env store =
     Nothing -> throwError $ RErrorNoMainFunction
     Just (loc, 0) -> case (store & (funcDefs & view)) ^.at loc of
       Nothing                                  -> throwError RErrorNoMainFunction
-      Just (LKFunctionDef _ _ _ (Block stmts)) -> local (const env) (evalStmts stmts)
+      Just ((LKFunctionDef _ _ _ (Block stmts)), mainEnv) -> local (const mainEnv) (evalStmts stmts)
     Just (loc, _) -> throwError $ RErrorNoMainFunction

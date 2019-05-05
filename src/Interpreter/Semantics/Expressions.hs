@@ -33,7 +33,7 @@ evalExpr (EApp lvalue exprs) = do
     ident <- evalLValue lvalue
     suppliedArgs <- mapM evalExpr exprs
 
-    LKFunctionDef returnType _ args (Block stmts) <- extractFunction ident
+    (LKFunctionDef returnType _ args (Block stmts), env) <- extractFunction ident
 
     unless (length suppliedArgs == length args)
         (throwError REInvalidNumberOfArgumentsSupplied)
@@ -41,7 +41,7 @@ evalExpr (EApp lvalue exprs) = do
     unless (all (\(suppliedArg, functionArg) -> (lkType suppliedArg == getTypeFromArg functionArg)) (zip suppliedArgs args))
         (throwError RErrorInvalidTypeNoInfo)
 
-    updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs exprs args
+    updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env exprs args
 
     (do local (const (increaseLevel updatedEnv)) (?evalStmts stmts)
         if returnType == Void then
@@ -143,8 +143,8 @@ evalLValue :: LValue -> Eval Ident
 evalLValue (LValue n) = return n
 
 
-getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs :: (?evalStmts :: [Stmt] -> Eval ()) => [Expr] -> [Arg] -> Eval Env
-getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs suppliedExprs defFuncsArgs = do
+getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs :: (?evalStmts :: [Stmt] -> Eval ()) => Env -> [Expr] -> [Arg] -> Eval Env
+getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env suppliedExprs defFuncsArgs = do
     let (vargs, rargs) = partition (\(_, functionArg) -> isVArg functionArg) (zip suppliedExprs defFuncsArgs)
     let (vFargs, rFargs) = join bimap (Prelude.map snd) (vargs, rargs)
     let (vIdents, rIdents) = join bimap (Prelude.map getIdentFromArg) (vFargs, rFargs)
@@ -154,8 +154,6 @@ getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs suppliedExprs defFuncsArgs = d
 
     rSuppliedArgs <- Prelude.mapM (evalLValueToIdent . fst) rargs
     rLocs <- Prelude.mapM extractVariableLocation rSuppliedArgs
-
-    env <- ask
 
     return $ foldr updateEnv env (zip rLocs rIdents ++ zip newVLocs vIdents)
 

@@ -6,7 +6,7 @@ import           Control.Monad.Writer
 import           AbsLakke
 
 import           Interpreter.EvalMonad
-import           Interpreter.Values
+import           Interpreter.Semantics.Domains
 import           Interpreter.ErrorTypes
 
 lkType :: LKValue -> Type
