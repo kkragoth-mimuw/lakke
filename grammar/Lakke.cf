@@ -4,7 +4,7 @@ entrypoints Program ;
 
 Program.    Program ::= [TopDef] ;
 
-FnDef.	    TopDef ::= FNDef1 ;
+FnDef.	    TopDef ::= FNDef ;
 
 StructDef.  TopDef ::= StructDecl ; 
 
@@ -12,11 +12,13 @@ Global.     TopDef ::= Decl ;
 
 separator nonempty TopDef "" ;
 
-VArg. 	   Arg ::= Type Ident;     ;
+ VArg. 	   Arg ::= Type Ident;     ;
 
-RArg.      Arg ::= Type "&" Ident; ;
+ RArg.      Arg ::= Type "&" Ident; ;
 
 separator  Arg "," ;
+
+separator Ident "," ;
 
 -- statements ----------------------------------------------
 
@@ -38,6 +40,8 @@ SDecl.     SDeclItem ::= Type Ident;
 
 FNDef.     FNDef ::= Type Ident "(" [Arg] ")" Block ;
 
+-- LambdaDef. LambdaDef ::= Type Ident "=" "(" [ Ident ] ")" Block ;
+
 ArrayDecl. Stmt ::= Type "[" Expr "]" Ident;
 
 separator   SDeclItem ";" ;
@@ -46,7 +50,7 @@ StructDecl. StructDecl ::= "struct" Ident "{" [ SDeclItem] "}" ";";
 
 Struct.     Stmt ::= StructDecl;
 
-LValue.         LValue  ::= Ident ;
+LValue.        LValue  ::= Ident ;
 
 Select.     LValue   ::= LValue "." Ident ;
 
@@ -95,16 +99,26 @@ Bool.          Type ::= "boolean" ;
 
 Void.          Type ::= "void" ;
 
-Array.         Type ::= Type "[" "]" ;
+-- Array.         Type ::= Type "[" "]" ;
 
-StructType.    Type ::= "struct" Ident ;
+-- StructType.    Type ::= "struct" Ident ;
 
 internal  Fun. Type ::= Type "(" [Type] ")" ;
 
+LambdaType. Type ::= "(" [ LambArg ] ")" "=>" Type ;
+
+LambVArg. LambArg ::= Type ;
+
+LambRArg. LambArg ::= "&" Type ;
+
 separator  Type "," ;
+
+separator LambArg "," ;
 
 -- Expressions ---------------------------------------------
 EApp.      Expr7 ::= LValue "(" [ Expr ] ")" ;
+
+ELambda.   Expr6 ::= "(" [Ident] ")" "=>" Block ;
 
 EVar.      Expr6 ::= LValue ;
 
