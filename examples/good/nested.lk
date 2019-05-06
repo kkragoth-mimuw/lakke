@@ -3,6 +3,8 @@ int f(int x) {
 		return x + y;
 	}
 
+	int x = 100;
+
 	return f2(5);
 }
 
