@@ -2,7 +2,7 @@
     return int :: () -> { return n * n; };
 }
 
-boolean check_condition(int n, (int) => boolean cond_func) {
+bool check_condition(int n, (int) => bool cond_func) {
     return cond_func(n);
 }
 
@@ -20,7 +20,7 @@ int main() {
 
     print ("Your lucky number squared: " + cast (string) (number_func()));
 
-    (int) => boolean condition = boolean :: (number :: int) -> { return n > 100; };
+    (int) => bool condition = bool :: (number :: int) -> { return number > 100; };
 
     if (check_condition(lucky_number, condition)) {
         print("Your lucky number squared is greater than 100");

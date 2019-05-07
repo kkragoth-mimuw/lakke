@@ -51,13 +51,14 @@ evalDecl (DeclF (FNDef fnType fnName args block)) = do
   store <- get
   env <- ask
 
-  i <- newloc funcDefs
+  i <- newloc vars
 
-  let func = LKFunctionDef fnType fnName args block
+  let newEnv = (env  & (varsEnv . at fnName ?~ (i, getLevel env)))
 
-  let newEnv = (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
-  put (store & (funcDefs . at i ?~ (func, newEnv) ))
-  return newEnv -- (env  & (funcsEnv . at fnName ?~ (i, getLevel env)))
+  let func = LKFunction (LKFunctionDef fnType fnName args block) newEnv
+
+  put (store & (vars . at i ?~ func))
+  return newEnv
 evalDecl _ = ask
 
 
@@ -67,16 +68,9 @@ evalItem type_ (Init lvalue expr) = do
   name <- evalLValue lvalue
 
   checkIfIsAlreadyDeclaredAtCurrentLevel name
-
-  traceM $ "TYPE CHECK HERE"
-
-  traceM $ show type_
-  traceM $ show $ lkType value
-
+  
   when (type_ /= lkType value) 
     (throwError RErrorInvalidTypeNoInfo)
-
-  traceM $ "FAIL CHECK HERE"
   store <- get
 
   i <- newloc vars
@@ -84,7 +78,5 @@ evalItem type_ (Init lvalue expr) = do
   put (store & (vars . at i ?~ value))
 
   env <- ask
-
-  traceM $ "yo"
 
   return (env & (varsEnv . at name ?~ (i, getLevel env)))

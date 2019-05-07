@@ -34,7 +34,7 @@ evalExpr (EApp lvalue exprs) = do
     ident <- evalLValue lvalue
     suppliedArgs <- mapM evalExpr exprs
 
-    (LKFunctionDef returnType _ args (Block stmts), env) <- extractFunction ident
+    LKFunction (LKFunctionDef returnType _ args (Block stmts)) env <- extractFunction ident
 
     unless (length suppliedArgs == length args)
         (throwError REInvalidNumberOfArgumentsSupplied)
@@ -43,11 +43,6 @@ evalExpr (EApp lvalue exprs) = do
         (throwError RErrorInvalidTypeNoInfo)
 
     updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env exprs args
-
-    traceM "eval"
-
-    store <- get
-    debug updatedEnv store
 
     local (const (increaseLevel updatedEnv)) (?evalStmts stmts >> checkIfFunctionShouldReturnSomething returnType)
              `catchError` catchReturn returnType

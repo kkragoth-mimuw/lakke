@@ -49,7 +49,7 @@ extractVariableFromStore location = do
     return $ fromJust maybeValue
 
 
-extractFunction :: Ident -> Eval (LKFunctionDef, Env)
+extractFunction :: Ident -> Eval LKValue
 extractFunction ident = extractFunctionFromStore =<< extractFunctionLocation ident
 
 
@@ -57,7 +57,7 @@ extractFunctionLocation :: Ident -> Eval Location
 extractFunctionLocation ident = do
     env <- ask
 
-    let maybeLocation = env ^. funcsEnv . at ident
+    let maybeLocation = env ^. varsEnv . at ident
 
     when (isNothing maybeLocation)
         (throwError $ RErrorUnknownIdentifier (show ident))
@@ -65,14 +65,16 @@ extractFunctionLocation ident = do
     return $ fst $ fromJust maybeLocation
 
 
-extractFunctionFromStore :: Location -> Eval (LKFunctionDef, Env)
+extractFunctionFromStore :: Location -> Eval LKValue
 extractFunctionFromStore location = do
     store <- get
 
-    let maybeValue = store ^. funcDefs . at location
+    let maybeValue = store ^. vars . at location
 
     when (isNothing maybeValue)
         (throwError RErrorMemoryLocation)
+
+    
 
     return $ fromJust maybeValue
 

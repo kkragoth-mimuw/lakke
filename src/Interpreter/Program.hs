@@ -32,9 +32,9 @@ instance Executable Program where
 
 runMainBlock :: Env -> Store -> Eval ()
 runMainBlock env store =
-  case (env & (funcsEnv & view)) ^.at (Ident "main") of
+  case (env & (varsEnv & view)) ^.at (Ident "main") of
     Nothing -> throwError $ RErrorNoMainFunction
-    Just (loc, 0) -> case (store & (funcDefs & view)) ^.at loc of
+    Just (loc, 0) -> case (store & (vars & view)) ^.at loc of
       Nothing                                  -> throwError RErrorNoMainFunction
-      Just ((LKFunctionDef argType _ _ (Block stmts)), mainEnv) -> local (const mainEnv) (evalStmts stmts) `catchError` catchReturnMain argType
+      Just (LKFunction (LKFunctionDef argType _ _ (Block stmts)) mainEnv) -> local (const mainEnv) (evalStmts stmts) `catchError` catchReturnMain argType
     Just (loc, _) -> throwError $ RErrorNoMainFunction

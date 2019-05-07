@@ -91,7 +91,7 @@ Int.           Type ::= "int" ;
 
 Str.           Type ::= "string" ;
 
-Bool.          Type ::= "boolean" ;
+Bool.          Type ::= "bool" ;
 
 Void.          Type ::= "void" ;
 

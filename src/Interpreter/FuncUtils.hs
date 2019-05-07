@@ -23,8 +23,7 @@ checkIfFunctionShouldReturnSomething returnType =
 
 
 catchReturnValueBuilder :: Bool -> Type -> RuntimeError -> Eval LKValue
-catchReturnValueBuilder isMain returnType runtimeError = do
-    traceM $ "catch return"
+catchReturnValueBuilder isMain returnType runtimeError =
     case runtimeError of
         LKReturn value -> case value of
             Just returnValue | lkType returnValue == returnType -> return returnValue
