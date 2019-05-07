@@ -44,6 +44,11 @@ evalExpr (EApp lvalue exprs) = do
 
     updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env exprs args
 
+    traceM "eval"
+
+    store <- get
+    debug updatedEnv store
+
     local (const (increaseLevel updatedEnv)) (?evalStmts stmts >> checkIfFunctionShouldReturnSomething returnType)
              `catchError` catchReturn returnType
 
@@ -120,6 +125,33 @@ evalExpr ELitTrue  = return $ LKBool True
 
 evalExpr ELitFalse = return $ LKBool False
 
+evalExpr (ELambda type_ lambdaArgs block) = do
+    env <- ask
+
+    let args = Prelude.map (\case LambSuppliedVArgWithType ident argType -> VArg argType ident
+                                  LambSuppliedRArgWithType ident argType -> RArg argType ident
+                           ) lambdaArgs
+
+    return $ LKFunction (LKFunctionDef type_ (Ident "") args block) env
+
+evalExpr (EAppLambda expr exprs) = do
+    func <- evalExpr expr
+
+    suppliedArgs <- mapM evalExpr exprs
+
+    case func of
+        LKFunction (LKFunctionDef returnType _ args (Block stmts)) env -> do
+            unless (length suppliedArgs == length args)
+                (throwError REInvalidNumberOfArgumentsSupplied)
+
+            unless (all (\(suppliedArg, functionArg) -> (lkType suppliedArg == getTypeFromArg functionArg)) (zip suppliedArgs args))
+                (throwError RErrorInvalidTypeNoInfo)
+
+            updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env exprs args
+
+            local (const (increaseLevel updatedEnv)) (?evalStmts stmts >> checkIfFunctionShouldReturnSomething returnType)
+                    `catchError` catchReturn returnType
+        _ -> throwError $ RErrorInvalidTypeNoInfo
 
 
 

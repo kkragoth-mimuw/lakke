@@ -7,6 +7,7 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Control.Monad.Writer
+import           Debug.Trace
 import           Data.Map                          as Map
 
 import           AbsLakke
@@ -67,9 +68,15 @@ evalItem type_ (Init lvalue expr) = do
 
   checkIfIsAlreadyDeclaredAtCurrentLevel name
 
+  traceM $ "TYPE CHECK HERE"
+
+  traceM $ show type_
+  traceM $ show $ lkType value
+
   when (type_ /= lkType value) 
     (throwError RErrorInvalidTypeNoInfo)
 
+  traceM $ "FAIL CHECK HERE"
   store <- get
 
   i <- newloc vars
@@ -77,5 +84,7 @@ evalItem type_ (Init lvalue expr) = do
   put (store & (vars . at i ?~ value))
 
   env <- ask
+
+  traceM $ "yo"
 
   return (env & (varsEnv . at name ?~ (i, getLevel env)))

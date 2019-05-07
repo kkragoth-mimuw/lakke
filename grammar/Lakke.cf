@@ -122,7 +122,7 @@ ELambda. Expr8 ::= Type "::" "(" [ LambSuppliedArgWithType ]")"  "->" Block;
 
 EApp.      Expr7 ::= LValue "(" [ Expr ] ")" ;
 
-EAppLambdaApp. Expr7 ::= Expr8 "(" [ Expr ] ")" ;
+EAppLambda. Expr7 ::= Expr8 "(" [ Expr ] ")" ;
 
 EVar.      Expr6 ::= LValue ;
 

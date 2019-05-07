@@ -13,6 +13,7 @@ import           Interpreter.Semantics.Domains
 import           Interpreter.ErrorTypes
 import           Interpreter.TypesUtils
 
+
 checkIfFunctionShouldReturnSomething :: Type -> Eval LKValue
 checkIfFunctionShouldReturnSomething returnType =
     if returnType == Void then
@@ -22,7 +23,8 @@ checkIfFunctionShouldReturnSomething returnType =
 
 
 catchReturnValueBuilder :: Bool -> Type -> RuntimeError -> Eval LKValue
-catchReturnValueBuilder isMain returnType runtimeError =
+catchReturnValueBuilder isMain returnType runtimeError = do
+    traceM $ "catch return"
     case runtimeError of
         LKReturn value -> case value of
             Just returnValue | lkType returnValue == returnType -> return returnValue
