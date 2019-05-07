@@ -111,9 +111,9 @@ separator  Type "," ;
 
 separator LambArg "," ;
 
-LambSuppliedVArgWithType. LambSuppliedArgWithType ::= Expr "::" Type ;
+LambSuppliedVArgWithType. LambSuppliedArgWithType ::= Ident "::" Type ;
 
-LambSuppliedRArgWithType. LambSuppliedArgWithType ::= Expr "::" "&" Type ;
+LambSuppliedRArgWithType. LambSuppliedArgWithType ::= Ident "::" "&" Type ;
 
 separator LambSuppliedArgWithType "," ;
 
