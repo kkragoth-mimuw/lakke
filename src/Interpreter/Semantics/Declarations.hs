@@ -49,8 +49,7 @@ evalDecl (DeclS (Decl type_ (Init lvalue expr))) = do
   env <- ask
 
   return (env & (varsEnv . at name ?~ (i, getLevel env)))
-evalDecl (ArrayDecl arrayType expr ident) = throwError RENotImplemented
-evalDecl (Struct structDecl) = throwError RENotImplemented
+
 evalDecl (DeclF (FNDef fnType fnName args block)) = do
   store <- get
   env <- ask
@@ -64,5 +63,9 @@ evalDecl (DeclF (FNDef fnType fnName args block)) = do
   let func = LKFunction (LKFunctionDef fnType fnName args block) newEnv
 
   put (store & (vars . at i ?~ func))
+  
   return newEnv
+
+evalDecl (ArrayDecl arrayType expr ident) = throwError RENotImplemented
+evalDecl (Struct structDecl) = throwError RENotImplemented
 evalDecl _ = ask
