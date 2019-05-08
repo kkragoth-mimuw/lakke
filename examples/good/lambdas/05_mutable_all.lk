@@ -1,0 +1,32 @@
+() => int number_squared_func(int n) {
+    return int :: () -> { return n * n; };
+}
+
+bool check_condition(int n, (int) => bool cond_func) {
+    return cond_func(n);
+}
+
+int main() {
+    int lucky_number = 13;
+
+    print(
+        string :: (a :: string, b :: string, mutable_lucky_number ::  & int) -> { 
+                                                                mutable_lucky_number = 6; 
+                                                                return a + b; 
+                                                                }("Hello", "World", lucky_number)
+    );
+
+    () => int number_func = number_squared_func(lucky_number);
+
+    print ("Your lucky number squared: " + cast (string) (number_func()));
+
+    (int) => bool condition = bool :: (number :: int) -> { return number > 100; };
+
+    if (check_condition(lucky_number, condition)) {
+        print("Your lucky number squared is greater than 100");
+    }
+    else {
+        print("Your lucky number squared isn't greater than 100");
+    }
+
+}

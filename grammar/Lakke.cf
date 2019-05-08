@@ -4,7 +4,7 @@ entrypoints Program ;
 
 Program.    Program ::= [TopDef] ;
 
-FnDef.	    TopDef ::= FNDef1 ;
+FnDef.	    TopDef ::= FNDef ;
 
 StructDef.  TopDef ::= StructDecl ; 
 
@@ -91,20 +91,38 @@ Int.           Type ::= "int" ;
 
 Str.           Type ::= "string" ;
 
-Bool.          Type ::= "boolean" ;
+Bool.          Type ::= "bool" ;
 
 Void.          Type ::= "void" ;
 
-Array.         Type ::= Type "[" "]" ;
+Array.         Type ::= "[]" Type ;
 
 StructType.    Type ::= "struct" Ident ;
 
 internal  Fun. Type ::= Type "(" [Type] ")" ;
 
+LambdaType.    Type ::= "(" [ LambArg ]")" "=>" Type ;
+
+LambVArg. LambArg ::= Type ;
+
+LambRArg. LambArg ::= "&" Type ;
+
 separator  Type "," ;
 
+separator LambArg "," ;
+
+LambSuppliedVArgWithType. LambSuppliedArgWithType ::= Ident "::" Type ;
+
+LambSuppliedRArgWithType. LambSuppliedArgWithType ::= Ident "::" "&" Type ;
+
+separator LambSuppliedArgWithType "," ;
+
 -- Expressions ---------------------------------------------
+ELambda. Expr8 ::= Type "::" "(" [ LambSuppliedArgWithType ]")"  "->" Block;
+
 EApp.      Expr7 ::= LValue "(" [ Expr ] ")" ;
+
+EAppLambda. Expr7 ::= Expr8 "(" [ Expr ] ")" ;
 
 EVar.      Expr6 ::= LValue ;
 
@@ -132,7 +150,7 @@ EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 
 EOr.       Expr ::= Expr1 "||" Expr ;
 
-coercions  Expr 7 ;
+coercions  Expr 8 ;
 
 separator  Expr "," ;
 

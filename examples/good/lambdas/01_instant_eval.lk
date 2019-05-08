@@ -1,0 +1,5 @@
+int main() {
+    print(
+        string :: (a :: string, b :: string) -> { return a + " " + b;  }("Hello", "World")
+    );
+}

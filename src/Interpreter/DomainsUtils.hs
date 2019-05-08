@@ -11,14 +11,27 @@ import           AbsLakke
 
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
+
 import           Interpreter.Semantics.Domains
-import           Interpreter.Values
 
 
 newloc :: Getting (Map.Map Location a) Store (Map.Map Location a) -> Eval Integer
 newloc storeGetter = do
     store <- get
     return $ toInteger $ Map.size (store & (storeGetter & view))
+
+
+storeNewVariable :: Ident -> LKValue -> Eval Env
+storeNewVariable name value = do
+    store <- get
+
+    i <- newloc vars
+  
+    put (store & (vars . at i ?~ value))
+  
+    env <- ask
+  
+    return (env & (varsEnv . at name ?~ (i, getLevel env)))
 
 
 extractVariable :: Ident -> Eval LKValue
@@ -32,7 +45,7 @@ extractVariableLocation ident = do
     let maybeLocation = env ^. varsEnv . at ident
 
     when (isNothing maybeLocation)
-        (throwError $ RErrorUnknownIdentifier (show ident))
+        (throwError $ initRuntimeErrorNoLocation (RErrorUnknownIdentifier (show ident)))
 
     return $ fst $ fromJust maybeLocation
 
@@ -44,38 +57,9 @@ extractVariableFromStore location = do
     let maybeValue = store ^. vars . at location
 
     when (isNothing maybeValue)
-        (throwError RErrorMemoryLocation)
+        (throwError $ initRuntimeErrorNoLocation RErrorMemoryLocation)
 
     return $ fromJust maybeValue
-
-
-extractFunction :: Ident -> Eval (LKFunctionDef, Env)
-extractFunction ident = extractFunctionFromStore =<< extractFunctionLocation ident
-
-
-extractFunctionLocation :: Ident -> Eval Location
-extractFunctionLocation ident = do
-    env <- ask
-
-    let maybeLocation = env ^. funcsEnv . at ident
-
-    when (isNothing maybeLocation)
-        (throwError $ RErrorUnknownIdentifier (show ident))
-
-    return $ fst $ fromJust maybeLocation
-
-
-extractFunctionFromStore :: Location -> Eval (LKFunctionDef, Env)
-extractFunctionFromStore location = do
-    store <- get
-
-    let maybeValue = store ^. funcDefs . at location
-
-    when (isNothing maybeValue)
-        (throwError RErrorMemoryLocation)
-
-    return $ fromJust maybeValue
-
 
 
 assignVariable :: Ident -> LKValue -> Eval ()
@@ -96,7 +80,7 @@ overIntegerVariable ident f = do
 
     case variable of
         (LKInt i) -> assignVariable ident (LKInt (f i))
-        _         -> throwError RErrorInvalidTypeNoInfo
+        _         -> throwError $ initRuntimeErrorNoLocation RErrorInvalidTypeNoInfo
 
 
 copySimpleVariable :: LKValue -> Eval Location
@@ -131,5 +115,5 @@ checkIfIsAlreadyDeclaredAtCurrentLevel ident = do
     let maybeLocation = env ^. varsEnv . at ident
 
     case maybeLocation of
-        Just (_, levelDeclared) | levelDeclared >= currentLevel -> throwError $ RERedeclaration ident      
+        Just (_, levelDeclared) | levelDeclared >= currentLevel -> throwError $ initRuntimeErrorNoLocation (RERedeclaration ident)
         _ -> return ()

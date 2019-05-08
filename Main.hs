@@ -17,6 +17,7 @@ import           SkelLakke
 
 import           Interpreter.Program
 import           Interpreter.Semantics.Domains (initEnv, initStore)
+import           Interpreter.ErrorTypes (pprintErrorMsg)
 
 
 import           ErrM
@@ -45,7 +46,7 @@ run v p s = let ts = myLLexer s in case p ts of
                           putStr (color Yellow ( unlines buffer))
 
                           case result of
-                            Left error -> putStrLn (color Red ("Lakke has encountered a problem: " ++ show error))
+                            Left error -> pprintErrorMsg error
                             _          -> exitSuccess
 
 

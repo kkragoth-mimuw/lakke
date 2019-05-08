@@ -23,18 +23,18 @@ executable lakke
                        Interpreter.ErrorTypes
                        Interpreter.EvalMonad
                        Interpreter.Program
-                       Interpreter.Values
                        Interpreter.Utils
                        Interpreter.Debug
                        Interpreter.TypesUtils
                        Interpreter.DomainsUtils
+                       Interpreter.FuncUtils
                        LexLakke
                        ParLakke
                        PrintLakke
                        SkelLakke
                        Interpreter.Semantics.Declarations
                        Interpreter.Semantics.TopDefs
-                       Interpreter.Semantics.Expressions
+                        Interpreter.Semantics.Expressions
                        Interpreter.Semantics.Statements
                        Interpreter.Semantics.Domains
   -- other-extensions:

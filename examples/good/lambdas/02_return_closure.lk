@@ -1,0 +1,13 @@
+() => int number_squared_func(int n) {
+    return int :: () -> { return n * n; };
+}
+
+int main() {
+    int lucky_number = 13;
+
+    number_squared_func(lucky_number);
+
+    () => int number_func = number_squared_func(lucky_number);
+
+    print ("Your lucky number squared: " + cast (string) (number_func()));
+}

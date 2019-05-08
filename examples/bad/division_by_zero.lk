@@ -1,0 +1,9 @@
+int f() {
+    int n = 10;
+    int k = 0;
+        return n/k;
+}
+
+int main() {
+    int c = f();
+}

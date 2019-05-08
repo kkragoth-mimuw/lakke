@@ -10,18 +10,21 @@ import           AbsLakke
 import           Interpreter.Debug
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
-import           Interpreter.Values
 import           Interpreter.FuncUtils
+import           Interpreter.DomainsUtils
 
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Statements
 import           Interpreter.Semantics.TopDefs
 
-runProgram :: (Executable program) => Env -> Store -> program -> ((Either RuntimeError (), Store), [String])
+
+runProgram :: (Executable program) => Env -> Store -> program -> ((Either RuntimeErrorWithLogging (), Store), [String])
 runProgram env st program = runWriter (runStateT (runExceptT (runReaderT (exec program) env)) st)
+
 
 class Executable f where
   exec :: f -> Eval ()
+
 
 instance Executable Program where
   exec (Program topdefs) = do
@@ -30,11 +33,12 @@ instance Executable Program where
 
     runMainBlock env store
 
+
 runMainBlock :: Env -> Store -> Eval ()
-runMainBlock env store =
-  case (env & (funcsEnv & view)) ^.at (Ident "main") of
-    Nothing -> throwError $ RErrorNoMainFunction
-    Just (loc, 0) -> case (store & (funcDefs & view)) ^.at loc of
-      Nothing                                  -> throwError RErrorNoMainFunction
-      Just ((LKFunctionDef argType _ _ (Block stmts)), mainEnv) -> local (const mainEnv) (evalStmts stmts) `catchError` catchReturnMain argType
-    Just (loc, _) -> throwError $ RErrorNoMainFunction
+runMainBlock env store = local (const env) ( do
+    (LKFunction (LKFunctionDef argType _ args (Block stmts)) mainEnv) <- extractVariable (Ident "main") `catchError` catchNoMainIdentifier
+
+    unless (null args) (throwError $ initRuntimeErrorNoLocation REMainHasArguments)
+
+    local (const mainEnv) (evalStmts stmts) `catchError` catchReturnMain argType
+  )
