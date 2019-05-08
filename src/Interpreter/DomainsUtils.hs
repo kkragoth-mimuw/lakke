@@ -21,6 +21,19 @@ newloc storeGetter = do
     return $ toInteger $ Map.size (store & (storeGetter & view))
 
 
+storeNewVariable :: Ident -> LKValue -> Eval Env
+storeNewVariable name value = do
+    store <- get
+
+    i <- newloc vars
+  
+    put (store & (vars . at i ?~ value))
+  
+    env <- ask
+  
+    return (env & (varsEnv . at name ?~ (i, getLevel env)))
+
+
 extractVariable :: Ident -> Eval LKValue
 extractVariable ident = extractVariableFromStore =<< extractVariableLocation ident
 
