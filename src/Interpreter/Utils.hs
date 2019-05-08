@@ -40,4 +40,7 @@ mapMulOpToMulFunction mulOp = case mulOp of
     Times -> (*)
     Div   -> div
 
-
+mapAddOpToFunction :: AddOp -> (Integer -> Integer -> Integer)
+mapAddOpToFunction addOp = case addOp of
+    Plus -> (+)
+    Minus -> (-)

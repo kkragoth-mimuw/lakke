@@ -35,11 +35,14 @@ catchReturnValueBuilder isMain returnType runtimeError =
             _ -> throwError RErrorInvalidTypeNoInfo
         error -> throwError error
 
+
 catchReturnMain :: Type -> RuntimeError -> Eval ()
 catchReturnMain returnType runtimeError  = catchReturnValueBuilder True returnType runtimeError >> return ()
 
+
 catchReturn :: Type -> RuntimeError -> Eval LKValue
 catchReturn = catchReturnValueBuilder False
+
 
 lambSuppliedArgToArg :: LambSuppliedArgWithType -> Arg
 lambSuppliedArgToArg = \case LambSuppliedVArgWithType ident argType -> VArg argType ident

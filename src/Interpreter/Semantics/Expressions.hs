@@ -51,8 +51,7 @@ evalExpr (EAdd expr1 addop expr2) = do
 
     case (l, r, addop) of
         (LKString l, LKString r, Plus) -> return $ LKString (l ++ r)
-        (LKInt l, LKInt r, Plus)       -> return $ LKInt (l + r)
-        (LKInt l, LKInt r, Minus)      -> return $ LKInt (l - r)
+        (LKInt l, LKInt r, op)         -> return $ LKInt (mapAddOpToFunction op l  r)
         _                              -> throwError $ RErrorInvalidTypeNoInfo
 
 
@@ -118,21 +117,6 @@ evalExpr (EAppLambda expr exprs) = do
     evalFunctionApplication func exprs
 
 
-evalExpr2 :: (?evalStmts :: [Stmt] -> Eval ()) =>  Expr -> Expr -> Eval (LKValue, LKValue)
-evalExpr2 leftExpr rightExpr = do
-    leftValue  <- evalExpr leftExpr
-    rightValue <- evalExpr rightExpr
-    return (leftValue, rightValue)
-        
-        
-evalLValueToIdent :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval Ident
-evalLValueToIdent (EVar lvalue) = evalLValue lvalue
-evalLValueToIdent _             = throwError RENotLValue
-
-
-evalLValue :: LValue -> Eval Ident
-evalLValue (LValue n) = return n
-
 
 evalFunctionApplication :: (?evalStmts :: [Stmt] -> Eval ()) => LKValue -> [Expr] -> Eval LKValue
 evalFunctionApplication  (LKFunction (LKFunctionDef returnType _ args (Block stmts)) env) exprs = do
@@ -165,3 +149,19 @@ getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env suppliedExprs defFuncsArgs
     rLocs <- Prelude.mapM extractVariableLocation rSuppliedArgs
 
     return $ foldr updateEnv env (zip rLocs rIdents ++ zip newVLocs vIdents)
+
+
+evalExpr2 :: (?evalStmts :: [Stmt] -> Eval ()) =>  Expr -> Expr -> Eval (LKValue, LKValue)
+evalExpr2 leftExpr rightExpr = do
+    leftValue  <- evalExpr leftExpr
+    rightValue <- evalExpr rightExpr
+    return (leftValue, rightValue)
+        
+        
+evalLValueToIdent :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval Ident
+evalLValueToIdent (EVar lvalue) = evalLValue lvalue
+evalLValueToIdent _             = throwError RENotLValue
+
+
+evalLValue :: LValue -> Eval Ident
+evalLValue (LValue n) = return n
