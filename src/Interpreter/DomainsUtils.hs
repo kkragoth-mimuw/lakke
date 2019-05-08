@@ -32,7 +32,7 @@ extractVariableLocation ident = do
     let maybeLocation = env ^. varsEnv . at ident
 
     when (isNothing maybeLocation)
-        (throwError $ RErrorUnknownIdentifier (show ident))
+        (throwError $ initRuntimeErrorNoLocation (RErrorUnknownIdentifier (show ident)))
 
     return $ fst $ fromJust maybeLocation
 
@@ -44,11 +44,11 @@ extractVariableFromStore location = do
     let maybeValue = store ^. vars . at location
 
     when (isNothing maybeValue)
-        (throwError RErrorMemoryLocation)
+        (throwError $ initRuntimeErrorNoLocation RErrorMemoryLocation)
 
     return $ fromJust maybeValue
 
-    
+
 assignVariable :: Ident -> LKValue -> Eval ()
 assignVariable ident value = do
     store <- get
@@ -67,7 +67,7 @@ overIntegerVariable ident f = do
 
     case variable of
         (LKInt i) -> assignVariable ident (LKInt (f i))
-        _         -> throwError RErrorInvalidTypeNoInfo
+        _         -> throwError $ initRuntimeErrorNoLocation RErrorInvalidTypeNoInfo
 
 
 copySimpleVariable :: LKValue -> Eval Location
@@ -102,5 +102,5 @@ checkIfIsAlreadyDeclaredAtCurrentLevel ident = do
     let maybeLocation = env ^. varsEnv . at ident
 
     case maybeLocation of
-        Just (_, levelDeclared) | levelDeclared >= currentLevel -> throwError $ RERedeclaration ident      
+        Just (_, levelDeclared) | levelDeclared >= currentLevel -> throwError $ initRuntimeErrorNoLocation (RERedeclaration ident)
         _ -> return ()

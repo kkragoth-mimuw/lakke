@@ -55,7 +55,7 @@ tellValue lkValue =
     if isSimpleType lkValue then
         tell [simpleTypeToString lkValue]
     else
-        throwError REValueIsNotPrintable
+        throwError $ initRuntimeErrorNoLocation REValueIsNotPrintable
 
 
 argToLambArg :: Arg -> LambArg

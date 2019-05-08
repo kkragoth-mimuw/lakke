@@ -7,6 +7,8 @@ import           PrintLakke
 
 import           Interpreter.Semantics.Domains
 
+defaultLevelOfLogging = 3
+
 data RuntimeError = RErrorUnknownIdentifier String
                   | RErrorDivisonByZero
                   | RErrorMemoryLocation
@@ -46,11 +48,13 @@ instance Show RuntimeError where
     show (RENotImplemented)                       = "Not implemented functionality"
                 
 
+
 type LoggingLevel = Integer
 
-defaultLevelOfLogging = 3
+data RuntimeErrorWithLogging = RuntimeErrorWithLogging RuntimeError LoggingLevel [String] deriving (Show)
 
-data RuntimeErrorWithLogging = RuntimeErrorWithLogging RuntimeError LoggingLevel [String]
+initRuntimeErrorNoLocation :: RuntimeError -> RuntimeErrorWithLogging
+initRuntimeErrorNoLocation error = RuntimeErrorWithLogging error (defaultLevelOfLogging + 1) []
 
 initRuntimeError :: (Print a) => RuntimeError -> a -> RuntimeErrorWithLogging
 initRuntimeError error location = RuntimeErrorWithLogging error defaultLevelOfLogging [printTree location]
