@@ -3,6 +3,7 @@ module Interpreter.ErrorTypes where
 import           Text.Printf
 
 import           AbsLakke
+import           PrintLakke
 
 import           Interpreter.Semantics.Domains
 
@@ -25,7 +26,6 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | LKContinue
                   | LKReturn (Maybe LKValue)
 
-
 instance Show RuntimeError where
     show RErrorNoMainFunction                     = "No main function defined"
     show (RErrorUnknownIdentifier identifier)     = "Unknown identifier " ++ identifier
@@ -44,3 +44,18 @@ instance Show RuntimeError where
     show (LKReturn value)                         = "Invalid return value " ++ show value
     show (REMainHasArguments)                     = "Main arguments are not supported in Lakke"
     show (RENotImplemented)                       = "Not implemented functionality"
+                
+
+type LoggingLevel = Integer
+
+defaultLevelOfLogging = 3
+
+data RuntimeErrorWithLogging = RuntimeErrorWithLogging RuntimeError LoggingLevel [String]
+
+initRuntimeError :: (Print a) => RuntimeError -> a -> RuntimeErrorWithLogging
+initRuntimeError error location = RuntimeErrorWithLogging error defaultLevelOfLogging [printTree location]
+
+
+appendLogToRuntimeError :: (Print a) => RuntimeErrorWithLogging -> a -> RuntimeErrorWithLogging
+appendLogToRuntimeError runtimeErrorWithLogging@(RuntimeErrorWithLogging error loggingLevel msg) location  | loggingLevel <= 0 = runtimeErrorWithLogging
+appendLogToRuntimeError                         (RuntimeErrorWithLogging error loggingLevel msg) location  = RuntimeErrorWithLogging error (loggingLevel - 1) (msg ++ [printTree location])

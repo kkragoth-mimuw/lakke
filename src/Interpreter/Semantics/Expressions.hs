@@ -13,6 +13,7 @@ import           Data.Map                      as Map hiding (foldr, partition)
 import           Debug.Trace
 
 import           AbsLakke
+import           PrintLakke
 
 import           Interpreter.Debug
 import           Interpreter.DomainsUtils
@@ -68,7 +69,7 @@ evalExpr rel@(ERel exprLeft relOp exprRight) = do
 evalExpr mul@(EMul exprLeft mulOp exprRight) = do
     (left, right) <- evalExpr2 exprLeft exprRight
     case (left, right, mulOp) of
-        (LKInt l, LKInt 0, Div ) -> throwError $ RErrorDivisonByZero
+        (LKInt l, LKInt 0, Div ) -> throwError $ REDebug (printTree mul)
         (LKInt l, LKInt r, _)    -> return $ LKInt (mapMulOpToMulFunction mulOp l r)
         _                        -> throwError $ RErrorInvalidTypeNoInfo
 
