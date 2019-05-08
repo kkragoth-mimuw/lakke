@@ -47,3 +47,7 @@ catchReturn = catchReturnValueBuilder False
 lambSuppliedArgToArg :: LambSuppliedArgWithType -> Arg
 lambSuppliedArgToArg = \case LambSuppliedVArgWithType ident argType -> VArg argType ident
                              LambSuppliedRArgWithType ident argType -> RArg argType ident
+
+catchNoMainIdentifier :: RuntimeError -> Eval LKValue
+catchNoMainIdentifier = \case (RErrorUnknownIdentifier identifier) | identifier == show (Ident "main") -> throwError RErrorNoMainFunction
+                              error -> throwError error
