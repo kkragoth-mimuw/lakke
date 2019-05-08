@@ -1,4 +1,5 @@
 {-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE LambdaCase     #-}
 
 module Interpreter.FuncUtils where
 
@@ -39,3 +40,7 @@ catchReturnMain returnType runtimeError  = catchReturnValueBuilder True returnTy
 
 catchReturn :: Type -> RuntimeError -> Eval LKValue
 catchReturn = catchReturnValueBuilder False
+
+lambSuppliedArgToArg :: LambSuppliedArgWithType -> Arg
+lambSuppliedArgToArg = \case LambSuppliedVArgWithType ident argType -> VArg argType ident
+                             LambSuppliedRArgWithType ident argType -> RArg argType ident

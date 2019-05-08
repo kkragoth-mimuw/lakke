@@ -1,5 +1,4 @@
 {-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE LambdaCase     #-}
 
 module Interpreter.Semantics.Expressions where
 
@@ -24,6 +23,7 @@ import           Interpreter.TypesUtils
 import           Interpreter.Utils
 import           Interpreter.FuncUtils
 
+
 evalExprDependencyInjection :: ([Stmt] -> Eval ()) -> Expr -> Eval LKValue
 evalExprDependencyInjection evalStmts expr = let ?evalStmts = evalStmts in evalExpr expr
 
@@ -31,20 +31,8 @@ evalExprDependencyInjection evalStmts expr = let ?evalStmts = evalStmts in evalE
 evalExpr :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval LKValue
 evalExpr (EApp lvalue exprs) = do
     ident <- evalLValue lvalue
-    suppliedArgs <- mapM evalExpr exprs
-
-    LKFunction (LKFunctionDef returnType _ args (Block stmts)) env <- extractFunction ident
-
-    unless (length suppliedArgs == length args)
-        (throwError REInvalidNumberOfArgumentsSupplied)
-
-    unless (all (\(suppliedArg, functionArg) -> (lkType suppliedArg == getTypeFromArg functionArg)) (zip suppliedArgs args))
-        (throwError RErrorInvalidTypeNoInfo)
-
-    updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env exprs args
-
-    local (const (increaseLevel updatedEnv)) (?evalStmts stmts >> checkIfFunctionShouldReturnSomething returnType)
-             `catchError` catchReturn returnType
+    func <- extractVariable ident
+    evalFunctionApplication func exprs
 
 
 evalExpr (ECast type_  expr) = do
@@ -100,15 +88,13 @@ evalExpr (Not expr) = do
 evalExpr (EAnd expr1 expr2) = do
     (left, right) <- evalExpr2 expr1 expr2
     case (left, right) of
-        (LKBool True, LKBool True) -> return $ LKBool True
-        (LKBool _, LKBool _)       -> return $ LKBool False
+        (LKBool l, LKBool r) -> return $ LKBool (l && r)
         _                          -> throwError $ RErrorInvalidTypeNoInfo
 
 evalExpr (EOr expr1 expr2) = do
     (left, right) <- evalExpr2 expr1 expr2
     case (left, right) of
-        (LKBool False, LKBool False) -> return $ LKBool False
-        (LKBool _, LKBool _)         -> return $ LKBool True
+        (LKBool l, LKBool r) -> return $ LKBool (l || r)
         _                            -> throwError $ RErrorInvalidTypeNoInfo
 
 evalExpr (EString str) = return $ LKString str
@@ -122,33 +108,23 @@ evalExpr ELitFalse = return $ LKBool False
 evalExpr (ELambda type_ lambdaArgs block) = do
     env <- ask
 
-    let args = Prelude.map (\case LambSuppliedVArgWithType ident argType -> VArg argType ident
-                                  LambSuppliedRArgWithType ident argType -> RArg argType ident
-                           ) lambdaArgs
+    let args = Prelude.map lambSuppliedArgToArg lambdaArgs
 
     return $ LKFunction (LKFunctionDef type_ (Ident "") args block) env
 
+
 evalExpr (EAppLambda expr exprs) = do
     func <- evalExpr expr
-
-    suppliedArgs <- mapM evalExpr exprs
-
-    case func of
-        LKFunction (LKFunctionDef returnType _ args (Block stmts)) env -> do
-            unless (length suppliedArgs == length args)
-                (throwError REInvalidNumberOfArgumentsSupplied)
-
-            unless (all (\(suppliedArg, functionArg) -> (lkType suppliedArg == getTypeFromArg functionArg)) (zip suppliedArgs args))
-                (throwError RErrorInvalidTypeNoInfo)
-
-            updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env exprs args
-
-            local (const (increaseLevel updatedEnv)) (?evalStmts stmts >> checkIfFunctionShouldReturnSomething returnType)
-                    `catchError` catchReturn returnType
-        _ -> throwError $ RErrorInvalidTypeNoInfo
+    evalFunctionApplication func exprs
 
 
-
+evalExpr2 :: (?evalStmts :: [Stmt] -> Eval ()) =>  Expr -> Expr -> Eval (LKValue, LKValue)
+evalExpr2 leftExpr rightExpr = do
+    leftValue  <- evalExpr leftExpr
+    rightValue <- evalExpr rightExpr
+    return (leftValue, rightValue)
+        
+        
 evalLValueToIdent :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval Ident
 evalLValueToIdent (EVar lvalue) = evalLValue lvalue
 evalLValueToIdent _             = throwError RENotLValue
@@ -156,6 +132,24 @@ evalLValueToIdent _             = throwError RENotLValue
 
 evalLValue :: LValue -> Eval Ident
 evalLValue (LValue n) = return n
+
+
+evalFunctionApplication :: (?evalStmts :: [Stmt] -> Eval ()) => LKValue -> [Expr] -> Eval LKValue
+evalFunctionApplication  (LKFunction (LKFunctionDef returnType _ args (Block stmts)) env) exprs = do
+    suppliedArgs <- mapM evalExpr exprs
+
+    unless (length suppliedArgs == length args)
+        (throwError REInvalidNumberOfArgumentsSupplied)
+
+    unless (all (\(suppliedArg, functionArg) -> (lkType suppliedArg == getTypeFromArg functionArg)) (zip suppliedArgs args))
+        (throwError RErrorInvalidTypeNoInfo)
+
+    updatedEnv <- getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env exprs args
+
+    local (const (increaseLevel updatedEnv)) (?evalStmts stmts >> checkIfFunctionShouldReturnSomething returnType)
+            `catchError` catchReturn returnType
+
+evalFunctionApplication _ _ = throwError $ RErrorInvalidTypeNoInfo
 
 
 getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs :: (?evalStmts :: [Stmt] -> Eval ()) => Env -> [Expr] -> [Arg] -> Eval Env
@@ -171,13 +165,3 @@ getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env suppliedExprs defFuncsArgs
     rLocs <- Prelude.mapM extractVariableLocation rSuppliedArgs
 
     return $ foldr updateEnv env (zip rLocs rIdents ++ zip newVLocs vIdents)
-
-
-evalExpr2 :: (?evalStmts :: [Stmt] -> Eval ()) =>  Expr -> Expr -> Eval (LKValue, LKValue)
-evalExpr2 leftExpr rightExpr = do
-    leftValue  <- evalExpr leftExpr
-    rightValue <- evalExpr rightExpr
-    return (leftValue, rightValue)
-
-
-
