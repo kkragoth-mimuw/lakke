@@ -22,7 +22,6 @@ import           Interpreter.EvalMonad
 import           Interpreter.Semantics.Domains
 import           Interpreter.TypesUtils
 import           Interpreter.Utils
-import           Interpreter.Values
 import           Interpreter.FuncUtils
 
 evalExprDependencyInjection :: ([Stmt] -> Eval ()) -> Expr -> Eval LKValue

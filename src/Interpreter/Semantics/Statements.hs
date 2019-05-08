@@ -20,7 +20,6 @@ import           Interpreter.Semantics.Declarations as LKDecl hiding (evalDecl, 
 import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Expressions  as LKExpr hiding (evalExpr)
 import           Interpreter.TypesUtils
-import           Interpreter.Values
 
 
 evalStmts :: [Stmt] -> Eval ()

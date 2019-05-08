@@ -23,7 +23,6 @@ executable lakke
                        Interpreter.ErrorTypes
                        Interpreter.EvalMonad
                        Interpreter.Program
-                       Interpreter.Values
                        Interpreter.Utils
                        Interpreter.Debug
                        Interpreter.TypesUtils

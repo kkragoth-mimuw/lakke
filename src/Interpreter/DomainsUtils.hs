@@ -11,8 +11,8 @@ import           AbsLakke
 
 import           Interpreter.ErrorTypes
 import           Interpreter.EvalMonad
+
 import           Interpreter.Semantics.Domains
-import           Interpreter.Values
 
 
 newloc :: Getting (Map.Map Location a) Store (Map.Map Location a) -> Eval Integer
