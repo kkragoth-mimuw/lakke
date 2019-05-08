@@ -36,5 +36,8 @@ runMainBlock env store =
     Nothing -> throwError $ RErrorNoMainFunction
     Just (loc, 0) -> case (store & (vars & view)) ^.at loc of
       Nothing                                  -> throwError RErrorNoMainFunction
-      Just (LKFunction (LKFunctionDef argType _ _ (Block stmts)) mainEnv) -> local (const mainEnv) (evalStmts stmts) `catchError` catchReturnMain argType
+      Just (LKFunction (LKFunctionDef argType _ args (Block stmts)) mainEnv) -> do
+                                        unless (length args == 0)
+                                            (throwError REMainHasArguments)
+                                        (local (const mainEnv) (evalStmts stmts) `catchError` catchReturnMain argType)
     Just (loc, _) -> throwError $ RErrorNoMainFunction

@@ -28,6 +28,7 @@ executable lakke
                        Interpreter.Debug
                        Interpreter.TypesUtils
                        Interpreter.DomainsUtils
+                       Interpreter.FuncUtils
                        LexLakke
                        ParLakke
                        PrintLakke

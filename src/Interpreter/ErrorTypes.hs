@@ -18,6 +18,7 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | RENotLValue
                   | RERedeclaration Ident
                   | REInvalidNumberOfArgumentsSupplied
+                  | REMainHasArguments
                   | REDebug String
                   | LKBreak
                   | LKContinue
@@ -40,3 +41,4 @@ instance Show RuntimeError where
     show LKBreak                                  = "break"
     show LKContinue                               = "continue"
     show (LKReturn value)                         = "Invalid return value " ++ show value
+    show (REMainHasArguments)                     = "Main arguments are not supported in Lakke"
