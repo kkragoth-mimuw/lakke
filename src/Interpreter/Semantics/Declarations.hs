@@ -28,17 +28,20 @@ isStmtDeclaration stmt = case stmt of
     _ -> False
 
 evalDeclDependencyInjection :: ([Stmt] -> Eval ()) -> Stmt -> Eval Env
-evalDeclDependencyInjection evalStmts stmt = let ?evalStmts = evalStmts in evalDecl stmt
+evalDeclDependencyInjection evalStmts stmt = let ?evalStmts = evalStmts in evalDeclWithErrorLogging stmt
+
+evalDeclWithErrorLogging :: (?evalStmts :: [Stmt] -> Eval ()) => Stmt -> Eval Env
+evalDeclWithErrorLogging stmt = evalDecl stmt `catchError` (\runtimeError -> throwError (appendLogToRuntimeError runtimeError stmt))
 
 evalDecl :: (?evalStmts :: [Stmt] -> Eval ()) => Stmt -> Eval Env
-evalDecl (DeclS (Decl type_ (Init lvalue expr))) = do
+evalDecl decl@(DeclS (Decl type_ (Init lvalue expr))) = do
   value <- evalExpr expr
   name <- evalLValue lvalue
 
   checkIfIsAlreadyDeclaredAtCurrentLevel name
   
   when (type_ /= lkType value) 
-    (throwError RErrorInvalidTypeNoInfo)
+    (throwError $ initRuntimeError RErrorInvalidTypeNoInfo decl)
 
   store <- get
 
@@ -63,9 +66,9 @@ evalDecl (DeclF (FNDef fnType fnName args block)) = do
   let func = LKFunction (LKFunctionDef fnType fnName args block) newEnv
 
   put (store & (vars . at i ?~ func))
-  
+
   return newEnv
 
-evalDecl (ArrayDecl arrayType expr ident) = throwError RENotImplemented
-evalDecl (Struct structDecl) = throwError RENotImplemented
+evalDecl decl@(ArrayDecl arrayType expr ident) = throwError $ initRuntimeError RENotImplemented decl
+evalDecl decl@(Struct structDecl) = throwError $ initRuntimeError RENotImplemented decl
 evalDecl _ = ask

@@ -1,13 +1,15 @@
 module Interpreter.ErrorTypes where
 
+import           Data.Char
 import           Text.Printf
+import           System.Console.Pretty         (Color (..), Style (..), bgColor, color, style, supportsPretty)
 
 import           AbsLakke
 import           PrintLakke
 
 import           Interpreter.Semantics.Domains
 
-defaultLevelOfLogging = 3
+defaultLevelOfLogging = 5
 
 data RuntimeError = RErrorUnknownIdentifier String
                   | RErrorDivisonByZero
@@ -63,3 +65,21 @@ initRuntimeError error location = RuntimeErrorWithLogging error defaultLevelOfLo
 appendLogToRuntimeError :: (Print a) => RuntimeErrorWithLogging -> a -> RuntimeErrorWithLogging
 appendLogToRuntimeError runtimeErrorWithLogging@(RuntimeErrorWithLogging error loggingLevel msg) location  | loggingLevel <= 0 = runtimeErrorWithLogging
 appendLogToRuntimeError                         (RuntimeErrorWithLogging error loggingLevel msg) location  = RuntimeErrorWithLogging error (loggingLevel - 1) (msg ++ [printTree location])
+
+
+pprintErrorMsg :: RuntimeErrorWithLogging -> IO ()
+pprintErrorMsg wholeMsg@(RuntimeErrorWithLogging error _ stack) = do
+    putStrLn (color Red ("Lakke has encountered a problem: " ++ show error))
+    mapM_ (\line -> putStrLn ("in: " ++  trim line))  stack    
+
+    
+trimLeft :: String -> String
+trimLeft = dropWhile isSpace
+    
+trimRight :: String -> String
+trimRight str | all isSpace str = ""
+trimRight (c : cs) = c : trimRight cs
+    
+trim :: String -> String
+trim = trimLeft . trimRight
+

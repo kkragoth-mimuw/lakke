@@ -18,7 +18,7 @@ import           Interpreter.Semantics.Statements
 import           Interpreter.Semantics.TopDefs
 
 
-runProgram :: (Executable program) => Env -> Store -> program -> ((Either RuntimeError (), Store), [String])
+runProgram :: (Executable program) => Env -> Store -> program -> ((Either RuntimeErrorWithLogging (), Store), [String])
 runProgram env st program = runWriter (runStateT (runExceptT (runReaderT (exec program) env)) st)
 
 
@@ -38,7 +38,7 @@ runMainBlock :: Env -> Store -> Eval ()
 runMainBlock env store = local (const env) ( do
     (LKFunction (LKFunctionDef argType _ args (Block stmts)) mainEnv) <- (extractVariable (Ident "main")) `catchError` (catchNoMainIdentifier)
 
-    unless (null args) (throwError REMainHasArguments)
+    unless (null args) (throwError $ initRuntimeErrorNoLocation REMainHasArguments)
 
     local (const mainEnv) (evalStmts stmts) `catchError` catchReturnMain argType
   )

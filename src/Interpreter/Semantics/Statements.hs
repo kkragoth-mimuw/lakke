@@ -34,25 +34,27 @@ evalStmtOrDeclaration stmt =
     if LKDecl.isStmtDeclaration stmt then
         evalDecl stmt
     else
-        evalStmt stmt >> ask
+        evalStmtWithErrorLogging stmt >> ask
 
+evalStmtWithErrorLogging :: Stmt -> Eval ()
+evalStmtWithErrorLogging stmt = evalStmt stmt `catchError` (\runtimeError -> throwError (appendLogToRuntimeError runtimeError stmt))
 
 evalStmt :: Stmt -> Eval ()
-evalStmt (Cond expr block) = evalStmt (CondElse expr block (Block []))
+evalStmt (Cond expr block) = evalStmtWithErrorLogging  (CondElse expr block (Block []))
 
 evalStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
     e <- evalExpr expr
     case e of
         LKBool True  -> evalStmts blockTrue
         LKBool False -> evalStmts blockFalse
-        _            -> throwError $ RErrorInvalidType Int "" expr
+        _            -> throwError $ initRuntimeErrorNoLocation RErrorInvalidTypeNoInfo
 
 
-evalStmt (While expr block) = evalStmt (For Empty expr Empty block)
+evalStmt (While expr block) = evalStmtWithErrorLogging (For Empty expr Empty block)
 
 evalStmt (For initStmt expr outerStmt block@(Block stmts)) = do
-    let evalForLoopStep       = evalStmts stmts >> evalStmt outerStmt
-    let recursiveEvalLoopBody = evalStmt (For Empty expr outerStmt block)
+    let evalForLoopStep       = evalStmts stmts >> evalStmtWithErrorLogging  outerStmt
+    let recursiveEvalLoopBody = evalStmtWithErrorLogging  (For Empty expr outerStmt block)
 
     env <- evalStmtOrDeclaration initStmt
     local (const env) (
@@ -62,10 +64,10 @@ evalStmt (For initStmt expr outerStmt block@(Block stmts)) = do
                 (LKBool False) -> return ()
                 (LKBool True) -> (evalForLoopStep >> recursiveEvalLoopBody)
                     `catchError` \case
-                                    LKContinue -> evalStmt outerStmt >> recursiveEvalLoopBody
-                                    LKBreak -> return ()
+                                    RuntimeErrorWithLogging LKContinue _ _ -> evalStmtWithErrorLogging  outerStmt >> recursiveEvalLoopBody
+                                    RuntimeErrorWithLogging LKBreak _ _ -> return ()
                                     error -> throwError error
-                _ -> throwError RErrorInvalidTypeNoInfo
+                _ -> throwError $ initRuntimeErrorNoLocation RErrorInvalidTypeNoInfo
         )
 
 
@@ -77,24 +79,24 @@ evalStmt (Ass lvalue expr) = do
     if lkType variable == lkType rvalue then
         assignVariable ident rvalue
     else
-        throwError RErrorInvalidTypeNoInfo
+        throwError $ initRuntimeErrorNoLocation RErrorInvalidTypeNoInfo
 
 
 evalStmt Empty = return ()
 
-evalStmt Break = throwError LKBreak
+evalStmt Break = throwError $ initRuntimeErrorNoLocation LKBreak
 
-evalStmt Continue = throwError LKContinue
+evalStmt Continue = throwError $ initRuntimeErrorNoLocation LKContinue
 
 evalStmt (SExp expr) = evalExpr expr >> return ()
 
 evalStmt (BStmt (Block stmts)) = local increaseLevel (evalStmts stmts)
 
-evalStmt VRet = throwError $ LKReturn Nothing
+evalStmt VRet = throwError $ initRuntimeErrorNoLocation (LKReturn Nothing)
 
 evalStmt (Print expr) = evalExpr expr >>= tellValue
 
-evalStmt (Ret expr) = evalExpr expr >>= \value -> throwError $ LKReturn (Just value)
+evalStmt (Ret expr) = evalExpr expr >>= \value -> throwError $ initRuntimeErrorNoLocation (LKReturn (Just value))
 
 evalStmt (Incr lvalue) = evalLValue lvalue >>= \ident -> overIntegerVariable ident (1 +)
 
