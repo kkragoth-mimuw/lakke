@@ -26,7 +26,10 @@ import           Interpreter.FuncUtils
 
 
 evalExprDependencyInjection :: ([Stmt] -> Eval ()) -> Expr -> Eval LKValue
-evalExprDependencyInjection evalStmts expr = let ?evalStmts = evalStmts in evalExpr expr
+evalExprDependencyInjection evalStmts expr = let ?evalStmts = evalStmts in evalExprWithLogging expr
+
+evalExprWithLogging :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval LKValue
+evalExprWithLogging expr = evalExpr expr `catchError` (\runtimeError -> throwError (appendLogToRuntimeError runtimeError expr))
 
 
 evalExpr :: (?evalStmts :: [Stmt] -> Eval ()) => Expr -> Eval LKValue
@@ -37,7 +40,7 @@ evalExpr (EApp lvalue exprs) = do
 
 
 evalExpr (ECast type_  expr) = do
-    value <- evalExpr expr
+    value <- evalExprWithLogging expr
 
     unless (isSimpleType value && checkIfAllowedType simpleTypes type_)
         (throwError $ RErrorInvalidTypeNoInfo)
@@ -74,13 +77,13 @@ evalExpr mul@(EMul exprLeft mulOp exprRight) = do
         _                        -> throwError $ RErrorInvalidTypeNoInfo
 
 evalExpr (Neg expr) = do
-    var <- evalExpr expr
+    var <- evalExprWithLogging expr
     case var of
         (LKInt value) -> return $ LKInt (negate value)
         _             -> throwError $ RErrorInvalidTypeNoInfo
 
 evalExpr (Not expr) = do
-    cond <- evalExpr expr
+    cond <- evalExprWithLogging expr
     case cond of
         (LKBool value) -> return $ LKBool (not value)
         _              -> throwError $ RErrorInvalidTypeNoInfo
@@ -114,14 +117,14 @@ evalExpr (ELambda type_ lambdaArgs block) = do
 
 
 evalExpr (EAppLambda expr exprs) = do
-    func <- evalExpr expr
+    func <- evalExprWithLogging expr
     evalFunctionApplication func exprs
 
 
 
 evalFunctionApplication :: (?evalStmts :: [Stmt] -> Eval ()) => LKValue -> [Expr] -> Eval LKValue
 evalFunctionApplication  (LKFunction (LKFunctionDef returnType _ args (Block stmts)) env) exprs = do
-    suppliedArgs <- mapM evalExpr exprs
+    suppliedArgs <- mapM evalExprWithLogging exprs
 
     unless (length suppliedArgs == length args)
         (throwError REInvalidNumberOfArgumentsSupplied)
@@ -143,7 +146,7 @@ getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env suppliedExprs defFuncsArgs
     let (vFargs, rFargs) = join bimap (Prelude.map snd) (vargs, rargs)
     let (vIdents, rIdents) = join bimap (Prelude.map getIdentFromArg) (vFargs, rFargs)
 
-    vSuppliedArgs <- Prelude.mapM (evalExpr . fst) vargs
+    vSuppliedArgs <- Prelude.mapM (evalExprWithLogging . fst) vargs
     newVLocs <- Prelude.mapM copySimpleVariable vSuppliedArgs
 
     rSuppliedArgs <- Prelude.mapM (evalLValueToIdent . fst) rargs
@@ -154,8 +157,8 @@ getUpdatedEnvFromSuppliedExprsAndDefinedFuncsArgs env suppliedExprs defFuncsArgs
 
 evalExpr2 :: (?evalStmts :: [Stmt] -> Eval ()) =>  Expr -> Expr -> Eval (LKValue, LKValue)
 evalExpr2 leftExpr rightExpr = do
-    leftValue  <- evalExpr leftExpr
-    rightValue <- evalExpr rightExpr
+    leftValue  <- evalExprWithLogging leftExpr
+    rightValue <- evalExprWithLogging rightExpr
     return (leftValue, rightValue)
         
         

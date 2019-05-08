@@ -8,4 +8,4 @@ import           Control.Monad.Writer
 import           Interpreter.ErrorTypes
 import           Interpreter.Semantics.Domains
 
-type Eval a = (ReaderT Env (ExceptT RuntimeError (StateT Store (Writer [String])))) a
+type Eval a = (ReaderT Env (ExceptT RuntimeErrorWithLogging (StateT Store (Writer [String])))) a
