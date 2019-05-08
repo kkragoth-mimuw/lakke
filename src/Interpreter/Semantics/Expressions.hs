@@ -136,6 +136,7 @@ evalFunctionApplication  (LKFunction (LKFunctionDef returnType _ args (Block stm
     local (const (increaseLevel updatedEnv)) (?evalStmts stmts >> checkIfFunctionShouldReturnSomething returnType)
             `catchError` catchReturn returnType
 
+evalFunctionApplication LKNotInitFunction _ = throwError $ initRuntimeErrorNoLocation REFunctionNotInitialized
 evalFunctionApplication _ _ = throwError $ initRuntimeErrorNoLocation RErrorInvalidTypeNoInfo
 
 

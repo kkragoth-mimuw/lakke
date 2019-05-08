@@ -22,6 +22,13 @@ lkType lkValue =
         _            -> Void
 
 
+defaultValue :: Type -> LKValue
+defaultValue type_ = case type_ of
+    Int -> LKInt 0
+    Bool -> LKBool False
+    Str -> LKString ""
+    LambdaType _ _ -> LKNotInitFunction
+
 checkIfAllowedTypeOfValue :: [Type] -> LKValue -> Bool
 checkIfAllowedTypeOfValue allowedTypes lkValue = checkIfAllowedType allowedTypes (lkType lkValue)
 

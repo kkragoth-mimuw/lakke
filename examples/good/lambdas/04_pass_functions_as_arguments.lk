@@ -5,9 +5,9 @@ bool filter(int n, (int) => bool filterCheck) {
 int main() {
     int n = 13;
 
-    (int) => bool isAgeGreaterThan100Predicate = bool :: (number :: int) {
+    (int) => bool isAgeGreaterThan100Predicate = bool :: (number :: int) -> {
         return number > 100;
-    }
+    };
 
     if (filter(n, isAgeGreaterThan100Predicate)) {
         print("age greater than 100");

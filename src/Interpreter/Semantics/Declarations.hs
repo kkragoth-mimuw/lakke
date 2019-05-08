@@ -39,10 +39,26 @@ evalDecl decl@(DeclS (Decl type_ (Init lvalue expr))) = do
   name <- evalLValue lvalue
 
   checkIfIsAlreadyDeclaredAtCurrentLevel name
-  
+
   when (type_ /= lkType value) 
     (throwError $ initRuntimeError RErrorInvalidTypeNoInfo decl)
 
+  store <- get
+
+  i <- newloc vars
+
+  put (store & (vars . at i ?~ value))
+
+  env <- ask
+
+  return (env & (varsEnv . at name ?~ (i, getLevel env)))
+
+evalDecl decl@(DeclS (Decl type_ (NoInit lvalue))) = do
+  let value = defaultValue  type_
+  name <- evalLValue lvalue
+
+  checkIfIsAlreadyDeclaredAtCurrentLevel name
+  
   store <- get
 
   i <- newloc vars

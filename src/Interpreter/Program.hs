@@ -36,7 +36,7 @@ instance Executable Program where
 
 runMainBlock :: Env -> Store -> Eval ()
 runMainBlock env store = local (const env) ( do
-    (LKFunction (LKFunctionDef argType _ args (Block stmts)) mainEnv) <- (extractVariable (Ident "main")) `catchError` (catchNoMainIdentifier)
+    (LKFunction (LKFunctionDef argType _ args (Block stmts)) mainEnv) <- extractVariable (Ident "main") `catchError` catchNoMainIdentifier
 
     unless (null args) (throwError $ initRuntimeErrorNoLocation REMainHasArguments)
 

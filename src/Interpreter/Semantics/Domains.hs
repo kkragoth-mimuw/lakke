@@ -34,6 +34,7 @@ data LKValue  = LKInt Integer
               | LKString String
               | LKFunction LKFunctionDef Env
               | LKStruct LKStructDef (Map.Map Ident LKValue)
+              | LKNotInitFunction
               | LKVoid
               deriving (Show)
 

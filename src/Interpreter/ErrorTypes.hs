@@ -18,6 +18,7 @@ data RuntimeError = RErrorUnknownIdentifier String
                   | RErrorInvalidTypeNoInfo
                   | RErrorInvalidType Type String Expr
                   | REValueIsNotPrintable
+                  | REFunctionNotInitialized
                   | REErrorCast
                   | RENoReturnValue
                   | RENotLValue
@@ -48,6 +49,7 @@ instance Show RuntimeError where
     show (LKReturn value)                         = "Invalid return value " ++ show value
     show (REMainHasArguments)                     = "Main arguments are not supported in Lakke"
     show (RENotImplemented)                       = "Not implemented functionality"
+    show REFunctionNotInitialized                 = "Using not initialized function"
                 
 
 
@@ -72,7 +74,7 @@ pprintErrorMsg wholeMsg@(RuntimeErrorWithLogging error _ stack) = do
     putStrLn (color Red ("Lakke has encountered a problem: " ++ show error))
     mapM_ (\line -> putStrLn ("in: " ++  trim line))  stack    
 
-    
+
 trimLeft :: String -> String
 trimLeft = dropWhile isSpace
     
