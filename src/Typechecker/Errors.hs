@@ -20,6 +20,7 @@ data TypecheckError = TCInvalidTypeExpectedType Type Type
                     | TCReturn
                     | TCNotLValue
                     | TCInvalidNumberOfArguments
+                    | TCDebug String
 
 instance Show TypecheckError where
     show (TCInvalidTypeExpectedType type' allowedType) = printf "Invalid type: %s. Expected: %s" (show type') (show allowedType)
@@ -28,7 +29,8 @@ instance Show TypecheckError where
     show TCBreak                                       = printf "Break stmt not in loop"
     show TCContinue                                    = printf "Continue stmt not in loop"
     show TCNotLValue                                   = "Incorrect lvalue"
---     show a = ""
+    show (TCDebug str)                                 = str
+    show a = ""
 
 data TypecheckErrorWithLogging = TypecheckErrorWithLogging TypecheckError Integer [String] deriving (Show)
 

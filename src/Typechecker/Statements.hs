@@ -59,7 +59,7 @@ typecheckDecl (DeclF (FNDef fnType fnName args (Block stmts))) = do
 
     let newEnvForFunction = foldr updateEnv newEnv args
 
-    local (const (increaseLevel newEnvForFunction)) (typecheckStmts stmts)
+    local (const $ indicateReturnType (increaseLevel newEnvForFunction) fnType) (typecheckStmts stmts)
 
     return newEnv
 
@@ -183,7 +183,7 @@ typecheckStmt (Decr lvalue) = do
     unless (lvalueType == Int)
         (throwError $ initTypecheckError $ TCInvalidTypeExpectedType lvalueType Int)
 
-typecheckStmt _ = undefined
+typecheckStmt a = throwError $ initTypecheckError $ TCDebug (show a)
 
 typecheckExprWithErrorLogging :: Expr -> TCM Type
 typecheckExprWithErrorLogging expr = typecheckExpr expr `catchError` (\typecheckError -> throwError (appendLogToTypecheckError typecheckError expr))
@@ -243,6 +243,9 @@ typecheckExpr(EAdd expr1 addop expr2) = do
         (Str, x, Plus)   -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
         (Int, x, _)      -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
         (x, _, _)        -> throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes x [Int, Str]
+
+typecheckExpr(EVar lvalue) = evalLValue lvalue >>= extractVariableType
+
 -- Wazne
 typecheckExpr(EApp lvalue exprs) = do
     ident <- evalLValue lvalue
@@ -251,6 +254,8 @@ typecheckExpr(EApp lvalue exprs) = do
 
 typecheckExpr(ELambda type_ lambdaArgs block) = do
     return type_
+
+typecheckExpr a = throwError $ initTypecheckError $ TCDebug (show a)
 
 typecheckFuncApplication :: Type -> [Expr] -> TCM Type
 typecheckFuncApplication = undefined
