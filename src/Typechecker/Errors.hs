@@ -14,6 +14,7 @@ data TypecheckError = TCInvalidType Type
                     | TCRedeclaration Ident
                     | TCBreak
                     | TCContinue
+                    | TCReturn
                     | TCNotLValue
                     | TCInvalidNumberOfArguments
                     deriving (Show)

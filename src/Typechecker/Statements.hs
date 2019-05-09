@@ -103,9 +103,7 @@ typecheckStmt (While expr block) = typecheckStmt (For Empty expr Empty block)
 typecheckStmt (For initStmt expr outerStmt block@(Block stmts)) = do
     env <- typecheckStmtOrDeclaration initStmt
 
-    -- TODO INIT FOR LOOP
-
-    local (const env) (
+    local (const (indicateLoop env)) (
         do
             conditionType <- typecheckExpr expr
 
@@ -123,6 +121,38 @@ typecheckStmt (Ass lvalue expr) = do
 
     when (lvalueType /= rvalueType)
         (throwError $ initTypecheckError $ TCInvalidTypeExpectedType rvalueType lvalueType)
+
+typecheckStmt Empty = return ()
+
+typecheckStmt Break = do
+    env <- ask
+
+    unless (not $ isInLoop env)
+        (throwError $ initTypecheckError TCBreak)
+
+typecheckStmt Continue = do
+    env <- ask
+
+    unless (not $ isInLoop env)
+        (throwError $ initTypecheckError TCContinue)
+
+typecheckStmt (SExp expr) = typecheckExpr expr >> return ()
+
+typecheckStmt (BStmt (Block stmts)) = local increaseLevel (typecheckStmts stmts)
+
+typecheckStmt VRet = do
+    env <- ask
+
+    case getReturnType env of
+        Nothing -> throwError $ initTypecheckError TCReturn
+        Just Void -> return ()
+        Just t -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType Void t
+
+typecheckStmt (Print expr) = do
+    exprType <- typecheckExpr expr
+
+    unless (exprType `notElem` [Str, Bool, Int])
+        (throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes exprType [Str, Bool, Int])
 
 typecheckStmt _ = undefined
 
