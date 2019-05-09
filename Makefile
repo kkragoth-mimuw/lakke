@@ -10,7 +10,7 @@ wc:
 generate_grammar:
 	mkdir -p generated && \
 	cd generated && \
-	bnfc -m ../grammar/lakke.cf 
+	bnfc -m ../grammar/Lakke.cf
 	cd generated && make
 
 .PHONY: clean

@@ -22,8 +22,6 @@ import           Interpreter.TypesUtils
 isStmtDeclaration :: Stmt -> Bool
 isStmtDeclaration stmt = case stmt of
     (DeclS _ ) -> True
-    (ArrayDecl _ _ _ ) -> True
-    (Struct _ ) -> True
     (DeclF _ ) -> True
     _ -> False
 
@@ -71,6 +69,4 @@ evalDecl (DeclF (FNDef fnType fnName args block)) = do
 
   return newEnv
 
-evalDecl decl@(ArrayDecl arrayType expr ident) = throwError $ initRuntimeError RENotImplemented decl
-evalDecl decl@(Struct structDecl) = throwError $ initRuntimeError RENotImplemented decl
 evalDecl _ = ask

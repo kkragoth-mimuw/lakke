@@ -34,9 +34,15 @@ executable lakke
                        SkelLakke
                        Interpreter.Semantics.Declarations
                        Interpreter.Semantics.TopDefs
-                        Interpreter.Semantics.Expressions
+                       Interpreter.Semantics.Expressions
                        Interpreter.Semantics.Statements
                        Interpreter.Semantics.Domains
+                       Typechecker.Environment
+                       Typechecker.Errors
+                       Typechecker.Statements
+                       Typechecker.Typecheck
+                       Typechecker.TypecheckMonad
+                       Typechecker.EnvironmentUtils
   -- other-extensions:
   build-depends:       base >=4.11
                ,       mtl

@@ -6,8 +6,6 @@ Program.    Program ::= [TopDef] ;
 
 FnDef.	    TopDef ::= FNDef ;
 
-StructDef.  TopDef ::= StructDecl ; 
-
 Global.     TopDef ::= Decl ;
 
 separator nonempty TopDef "" ;
@@ -38,19 +36,9 @@ SDecl.     SDeclItem ::= Type Ident;
 
 FNDef.     FNDef ::= Type Ident "(" [Arg] ")" Block ;
 
-ArrayDecl. Stmt ::= Type "[" Expr "]" Ident;
-
 separator   SDeclItem ";" ;
 
-StructDecl. StructDecl ::= "struct" Ident "{" [ SDeclItem] "}" ";";
-
-Struct.     Stmt ::= StructDecl;
-
 LValue.         LValue  ::= Ident ;
-
-Select.     LValue   ::= LValue "." Ident ;
-
-ArraySelect. LValue   ::= LValue "[" Expr "]" ;
 
 NoInit.    Item ::= LValue ; 
 
@@ -94,12 +82,6 @@ Str.           Type ::= "string" ;
 Bool.          Type ::= "bool" ;
 
 Void.          Type ::= "void" ;
-
-Array.         Type ::= "[]" Type ;
-
-StructType.    Type ::= "struct" Ident ;
-
-internal  Fun. Type ::= Type "(" [Type] ")" ;
 
 LambdaType.    Type ::= "(" [ LambArg ]")" "=>" Type ;
 
