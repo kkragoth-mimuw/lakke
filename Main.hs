@@ -45,7 +45,7 @@ run v p s = let ts = myLLexer s in case p ts of
                           putStrLn s
                           exitFailure
            Ok  tree -> case runTypecheck initTCMEnv tree of
-                            Left error ->  putStrLn "typecheck failed"
+                            Left error ->  putStrLn $ "typecheck failed" ++ show error
                             Right _ -> do
                                       let ((result, _), buffer) = runProgram initEnv initStore tree
                                       putStrLn ""

@@ -1,5 +1,6 @@
 module Typechecker.Statements where
 
+import Control.Lens
 import Control.Monad.Reader
 import Control.Monad.Except
 
@@ -17,11 +18,95 @@ typecheckTopDefs (x:xs) = do
     local (const env) (typecheckTopDefs xs)
 
 typecheckTopDef :: TopDef -> TCM TCMEnv
-typecheckTopDef (Global decl) = typecheckDecl (DeclS decl) >> ask
-typecheckTopDef (FnDef fnDef) = typecheckDecl (DeclF fnDef) >> ask
+typecheckTopDef (Global decl) = typecheckDeclWithLogging (DeclS decl)
+typecheckTopDef (FnDef fnDef) = typecheckDeclWithLogging (DeclF fnDef)
 
-typecheckDecl (DeclS (Decl type_ (Init lvalue expr))) = undefined
+typecheckDeclWithLogging :: Stmt -> TCM TCMEnv
+typecheckDeclWithLogging stmt = typecheckDecl stmt `catchError` (\typecheckError -> throwError (appendLogToTypecheckError typecheckError stmt))
 
+typecheckDecl :: Stmt -> TCM TCMEnv
+typecheckDecl (DeclS (Decl type_ (Init lvalue expr))) = do
+    exprType <- typecheckExpr expr
+    name <- evalLValue lvalue
+
+    checkIfIsAlreadyDeclaredAtCurrentLevel name
+
+    when (type_ /= exprType)
+        (throwError $ initTypecheckError $ TCInvalidTypeExpectedType exprType type_)
+
+    env <- ask
+
+    return (env & (tcmTypes . at name ?~ (type_, getLevel env)))
+
+
+typecheckDecl (DeclS (Decl type_ (NoInit lvalue))) = do
+    name <- evalLValue lvalue
+
+    checkIfIsAlreadyDeclaredAtCurrentLevel name
+
+    env <- ask
+
+    return (env & (tcmTypes . at name ?~ (type_, getLevel env)))
+
+typecheckDecl (DeclF (FNDef fnType fnName args (Block stmts))) = do
+    checkIfIsAlreadyDeclaredAtCurrentLevel fnName
+
+    env <- ask
+
+    let funcType = LambdaType (Prelude.map argToLambArg args)  fnType
+    
+    let newEnv = (env  & (tcmTypes . at fnName ?~ (funcType, getLevel env)))
+
+    let newEnvForFunction = newEnv
+
+    local (const newEnvForFunction) (typecheckStmts stmts)
+    
+    return newEnv
+
+argToLambArg :: Arg -> LambArg
+argToLambArg arg = case arg of 
+    VArg type' _ -> LambVArg type'
+    RArg type' _ -> LambRArg type'
+
+
+typecheckStmts :: [Stmt] -> TCM ()
+typecheckStmts [] = return ()
+typecheckStmts (x:xs) = do
+    env <- typecheckStmtOrDeclaration x
+    local (const env) (typecheckStmts xs)
+
+typecheckStmtOrDeclaration :: Stmt -> TCM TCMEnv
+typecheckStmtOrDeclaration stmt =
+    if isStmtDeclaration stmt then
+        typecheckDeclWithLogging stmt
+    else
+        typecheckStmtWithLogging stmt >> ask
+        
+
+typecheckStmtWithLogging :: Stmt -> TCM ()
+typecheckStmtWithLogging stmt = typecheckStmt stmt `catchError` (\typecheckError -> throwError (appendLogToTypecheckError typecheckError stmt))
+
+typecheckStmt :: Stmt -> TCM ()
+typecheckStmt (Cond expr (Block blockTrue)) = do
+    exprType <- typecheckExprWithErrorLogging expr
+
+    unless (exprType == Bool)
+        (throwError $ initTypecheckError $ TCInvalidTypeExpectedType exprType Bool)
+
+    typecheckStmts blockTrue
+
+typecheckStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
+    exprType <- typecheckExprWithErrorLogging expr
+
+    unless (exprType == Bool)
+        (throwError $ initTypecheckError $ TCInvalidTypeExpectedType exprType Bool)
+
+    typecheckStmts blockTrue
+    typecheckStmts blockFalse
+
+
+
+typecheckStmt _ = undefined
 
 typecheckExprWithErrorLogging :: Expr -> TCM Type
 typecheckExprWithErrorLogging expr = typecheckExpr expr `catchError` (\typecheckError -> throwError (appendLogToTypecheckError typecheckError expr))
@@ -95,3 +180,10 @@ evalLValueToIdent loc             = throwError $ initTypecheckError $ TCMNotLVal
 
 evalLValue :: LValue -> TCM Ident
 evalLValue (LValue n) = return n
+
+
+isStmtDeclaration :: Stmt -> Bool
+isStmtDeclaration stmt = case stmt of
+    (DeclS _ ) -> True
+    (DeclF _ ) -> True
+    _ -> False

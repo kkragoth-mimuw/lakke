@@ -15,9 +15,10 @@ data TypecheckError = TCInvalidType Type
                     | TCContinue
                     | TCNotLValue
                     | TCInvalidNumberOfArguments
+                    deriving (Show)
 
-instance Show TypecheckError where
-    show a = ""
+-- instance Show TypecheckError where
+--     show a = ""
 
 data TypecheckErrorWithLogging = TypecheckErrorWithLogging TypecheckError Integer [String] deriving (Show)
 
