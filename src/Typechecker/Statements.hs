@@ -1,15 +1,15 @@
 module Typechecker.Statements where
 
-import Control.Lens
-import Control.Monad.Reader
-import Control.Monad.Except
+import           Control.Lens                 hiding (Empty)
+import           Control.Monad.Except
+import           Control.Monad.Reader
 
-import AbsLakke
+import           AbsLakke
 
-import Typechecker.Environment
-import Typechecker.TypecheckMonad
-import Typechecker.Errors
-import Typechecker.EnvironmentUtils
+import           Typechecker.Environment
+import           Typechecker.EnvironmentUtils
+import           Typechecker.Errors
+import           Typechecker.TypecheckMonad
 
 typecheckTopDefs :: [TopDef] -> TCM TCMEnv
 typecheckTopDefs [] = ask
@@ -54,17 +54,17 @@ typecheckDecl (DeclF (FNDef fnType fnName args (Block stmts))) = do
     env <- ask
 
     let funcType = LambdaType (Prelude.map argToLambArg args)  fnType
-    
+
     let newEnv = (env  & (tcmTypes . at fnName ?~ (funcType, getLevel env)))
 
     let newEnvForFunction = newEnv
 
     local (const newEnvForFunction) (typecheckStmts stmts)
-    
+
     return newEnv
 
 argToLambArg :: Arg -> LambArg
-argToLambArg arg = case arg of 
+argToLambArg arg = case arg of
     VArg type' _ -> LambVArg type'
     RArg type' _ -> LambRArg type'
 
@@ -81,19 +81,13 @@ typecheckStmtOrDeclaration stmt =
         typecheckDeclWithLogging stmt
     else
         typecheckStmtWithLogging stmt >> ask
-        
+
 
 typecheckStmtWithLogging :: Stmt -> TCM ()
 typecheckStmtWithLogging stmt = typecheckStmt stmt `catchError` (\typecheckError -> throwError (appendLogToTypecheckError typecheckError stmt))
 
 typecheckStmt :: Stmt -> TCM ()
-typecheckStmt (Cond expr (Block blockTrue)) = do
-    exprType <- typecheckExprWithErrorLogging expr
-
-    unless (exprType == Bool)
-        (throwError $ initTypecheckError $ TCInvalidTypeExpectedType exprType Bool)
-
-    typecheckStmts blockTrue
+typecheckStmt (Cond expr block@(Block blockTrue)) = typecheckStmt (CondElse expr block (Block []))
 
 typecheckStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
     exprType <- typecheckExprWithErrorLogging expr
@@ -104,7 +98,31 @@ typecheckStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
     typecheckStmts blockTrue
     typecheckStmts blockFalse
 
+typecheckStmt (While expr block) = typecheckStmt (For Empty expr Empty block)
 
+typecheckStmt (For initStmt expr outerStmt block@(Block stmts)) = do
+    env <- typecheckStmtOrDeclaration initStmt
+
+    -- TODO INIT FOR LOOP
+
+    local (const env) (
+        do
+            conditionType <- typecheckExpr expr
+
+            case conditionType of
+                Bool -> do
+                    typecheckStmts stmts
+                    typecheckStmt outerStmt
+                x -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
+        )
+
+typecheckStmt (Ass lvalue expr) = do
+    ident <- evalLValue lvalue
+    lvalueType <- extractVariableType ident
+    rvalueType <- typecheckExpr expr
+
+    when (lvalueType /= rvalueType)
+        (throwError $ initTypecheckError $ TCInvalidTypeExpectedType rvalueType lvalueType)
 
 typecheckStmt _ = undefined
 
@@ -120,52 +138,52 @@ typecheckExpr (EOr expr1 expr2) = do
     (left, right) <- typecheckExpr2 expr1 expr2
     case (left, right) of
         (Bool, Bool) -> return Bool
-        (Bool, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
-        (x, _)    -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
+        (Bool, x)    -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
+        (x, _)       -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
 typecheckExpr (EAnd expr1 expr2) = do
     (left, right) <- typecheckExpr2 expr1 expr2
     case (left, right) of
         (Bool, Bool) -> return Bool
-        (Bool, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
-        (x, _)    -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
+        (Bool, x)    -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
+        (x, _)       -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
 typecheckExpr (Not expr) = do
     exprType <- typecheckExprWithErrorLogging expr
     case exprType of
         Bool -> return Bool
-        x -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
+        x    -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
 typecheckExpr (Neg expr) = do
     exprType <- typecheckExprWithErrorLogging expr
     case exprType of
         Int -> return Int
-        x -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
+        x   -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
 typecheckExpr (EMul exprLeft _ exprRight) = do
     (left, right) <- typecheckExpr2 exprLeft exprRight
     case (left, right) of
         (Int, Int) -> return Int
-        (Int, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
-        (x, _) ->  throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
+        (Int, x)   -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
+        (x, _)     ->  throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
 typecheckExpr (ERel exprLeft _ exprRight) = do
     (left, right) <- typecheckExpr2 exprLeft exprRight
     case (left, right) of
         (Str, Str) -> return Bool
         (Int, Int) -> return Bool
-        (Int, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
-        (Str, x) ->  throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
-        (x, _) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes x [Int, Str]
+        (Int, x)   -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
+        (Str, x)   ->  throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
+        (x, _)     -> throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes x [Int, Str]
 typecheckExpr(ECast type_ expr) = do
     exprType <- typecheckExpr expr
     case (type_, exprType) of
         (Str, Int) -> return Str
-        (Str, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
-        (x, _) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
+        (Str, x)   -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
+        (x, _)     -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
 typecheckExpr(EAdd expr1 addop expr2) = do
     (left, right) <- typecheckExpr2 expr1 expr2
     case (left, right, addop) of
         (Str, Str, Plus) -> return Str
-        (Int, Int, _) -> return Int
-        (Str, x, Plus) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
-        (Int, x, _) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
-        (x, _, _) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes x [Int, Str]
+        (Int, Int, _)    -> return Int
+        (Str, x, Plus)   -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
+        (Int, x, _)      -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
+        (x, _, _)        -> throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes x [Int, Str]
 typecheckExpr2 :: Expr -> Expr -> TCM (Type, Type)
 typecheckExpr2 leftExpr rightExpr = do
     leftType <- typecheckExprWithErrorLogging leftExpr
@@ -175,7 +193,7 @@ typecheckExpr2 leftExpr rightExpr = do
 
 evalLValueToIdent :: Expr -> TCM Ident
 evalLValueToIdent (EVar lvalue) = evalLValue lvalue
-evalLValueToIdent loc             = throwError $ initTypecheckError $ TCMNotLValue
+evalLValueToIdent loc           = throwError $ initTypecheckError $ TCMNotLValue
 
 
 evalLValue :: LValue -> TCM Ident
@@ -186,4 +204,4 @@ isStmtDeclaration :: Stmt -> Bool
 isStmtDeclaration stmt = case stmt of
     (DeclS _ ) -> True
     (DeclF _ ) -> True
-    _ -> False
+    _          -> False

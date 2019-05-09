@@ -40,7 +40,7 @@ evalStmtWithErrorLogging :: Stmt -> Eval ()
 evalStmtWithErrorLogging stmt = evalStmt stmt `catchError` (\runtimeError -> throwError (appendLogToRuntimeError runtimeError stmt))
 
 evalStmt :: Stmt -> Eval ()
-evalStmt (Cond expr block) = evalStmtWithErrorLogging  (CondElse expr block (Block []))
+evalStmt (Cond expr block) = evalStmt  (CondElse expr block (Block []))
 
 evalStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
     e <- evalExpr expr
@@ -50,7 +50,7 @@ evalStmt (CondElse expr (Block blockTrue) (Block blockFalse)) = do
         _            -> throwError $ initRuntimeErrorNoLocation RErrorInvalidTypeNoInfo
 
 
-evalStmt (While expr block) = evalStmtWithErrorLogging (For Empty expr Empty block)
+evalStmt (While expr block) = evalStmt (For Empty expr Empty block)
 
 evalStmt (For initStmt expr outerStmt block@(Block stmts)) = do
     let evalForLoopStep       = evalStmts stmts >> evalStmtWithErrorLogging  outerStmt

@@ -9,8 +9,9 @@ data TypecheckError = TCInvalidType Type
                     | TCInvalidTypeExpectedType Type Type
                     | TCInvalidTypeExpectedTypes Type [ Type ]
                     | TCInvalidFunctionAppTypes [Type] [Type]
+                    | TCUndeclaredVariable Ident
                     | TCMNotLValue
-                    | TCMRedeclaration Ident
+                    | TCRedeclaration Ident
                     | TCBreak
                     | TCContinue
                     | TCNotLValue
