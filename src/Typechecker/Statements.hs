@@ -154,6 +154,32 @@ typecheckStmt (Print expr) = do
     unless (exprType `notElem` [Str, Bool, Int])
         (throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes exprType [Str, Bool, Int])
 
+typecheckStmt (Ret expr) = do
+    exprType <- typecheckExpr expr
+
+    env <- ask
+
+    case getReturnType env of
+        Nothing -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType exprType Void
+        Just a | exprType == a -> return ()
+        Just t -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType exprType t
+
+typecheckStmt (Incr lvalue) = do
+    ident <- evalLValue lvalue
+
+    lvalueType <- extractVariableType ident
+
+    unless (lvalueType == Int)
+        (throwError $ initTypecheckError $ TCInvalidTypeExpectedType lvalueType Int)
+
+typecheckStmt (Decr lvalue) = do
+    ident <- evalLValue lvalue
+
+    lvalueType <- extractVariableType ident
+
+    unless (lvalueType == Int)
+        (throwError $ initTypecheckError $ TCInvalidTypeExpectedType lvalueType Int)
+
 typecheckStmt _ = undefined
 
 typecheckExprWithErrorLogging :: Expr -> TCM Type
