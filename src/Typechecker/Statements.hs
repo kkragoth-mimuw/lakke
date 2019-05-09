@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Typechecker.Statements where
 
 import           Control.Lens                 hiding (Empty)
@@ -262,8 +264,18 @@ typecheckExpr(EAppLambda expr exprs) = do
     func <- typecheckExpr expr
     typecheckFuncApplication func exprs
 
--- TODO TYPECHECK block
-typecheckExpr(ELambda (LambdaType args type_) lambdaArgs block) = return type_
+typecheckExpr(ELambda type_ suppliedLambArgs (Block stmts)) = do
+    env <- ask
+
+    let lambArgs = map lambSuppliedArgToLambArg suppliedLambArgs
+
+    let args = map lambSuppliedArgToArg suppliedLambArgs
+
+    let newEnvForFunction = foldr updateEnv env args
+
+    local (const $ indicateReturnType (increaseLevel newEnvForFunction) type_) (typecheckStmts stmts)
+
+    return $ LambdaType lambArgs type_ 
 
 typecheckExpr a = throwError $ initTypecheckError $ TCDebug (show a)
 
@@ -304,3 +316,11 @@ isStmtDeclaration stmt = case stmt of
     (DeclS _ ) -> True
     (DeclF _ ) -> True
     _          -> False
+
+lambSuppliedArgToArg :: LambSuppliedArgWithType -> Arg
+lambSuppliedArgToArg = \case LambSuppliedVArgWithType ident argType -> VArg argType ident
+                             LambSuppliedRArgWithType ident argType -> RArg argType ident
+
+lambSuppliedArgToLambArg :: LambSuppliedArgWithType -> LambArg
+lambSuppliedArgToLambArg = \case LambSuppliedVArgWithType ident argType -> LambVArg argType
+                                 LambSuppliedRArgWithType ident argType -> LambRArg argType

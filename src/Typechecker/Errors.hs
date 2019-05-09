@@ -30,7 +30,7 @@ instance Show TypecheckError where
     show TCContinue                                    = "Continue stmt not in loop"
     show TCNotLValue                                   = "Incorrect lvalue"
     show TCInvalidNumberOfArguments                    = "Passed invalid number of arguments"
-    show (TCDebug str)                                 = str
+    show (TCDebug str)                                 = "DEBUG, yo" ++ str
     show a = ""
 
 data TypecheckErrorWithLogging = TypecheckErrorWithLogging TypecheckError Integer [String] deriving (Show)
