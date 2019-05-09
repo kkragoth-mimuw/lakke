@@ -19,6 +19,9 @@ import           Interpreter.Program
 import           Interpreter.Semantics.Domains (initEnv, initStore)
 import           Interpreter.ErrorTypes (pprintErrorMsg)
 
+import           Typechecker.Typecheck
+import           Typechecker.Environment
+
 
 import           ErrM
 
@@ -41,13 +44,16 @@ run v p s = let ts = myLLexer s in case p ts of
                           putStrV v $ show ts
                           putStrLn s
                           exitFailure
-           Ok  tree -> do let ((result, _), buffer) = runProgram initEnv initStore tree
-                          putStrLn ""
-                          putStr (color Yellow ( unlines buffer))
+           Ok  tree -> case runTypecheck initTCMEnv tree of
+                            Left error ->  putStrLn "typecheck failed"
+                            Right _ -> do
+                                      let ((result, _), buffer) = runProgram initEnv initStore tree
+                                      putStrLn ""
+                                      putStr (color Yellow ( unlines buffer))
 
-                          case result of
-                            Left error -> pprintErrorMsg error
-                            _          -> exitSuccess
+                                      case result of
+                                        Left error -> pprintErrorMsg error
+                                        _          -> exitSuccess
 
 
 showTree :: (Show a, Print a) => Int -> a -> IO ()
