@@ -3,6 +3,8 @@ module Typechecker.Statements where
 import           Control.Lens                 hiding (Empty)
 import           Control.Monad.Except
 import           Control.Monad.Reader
+import           Data.List
+import           Debug.Trace
 
 import           AbsLakke
 
@@ -68,6 +70,11 @@ argToLambArg arg = case arg of
     VArg type' _ -> LambVArg type'
     RArg type' _ -> LambRArg type'
 
+lambArgToType :: LambArg -> Type
+lambArgToType arg = case arg of
+    LambVArg type' -> type'
+    LambRArg type' -> type'
+
 updateEnv :: Arg -> TCMEnv -> TCMEnv
 updateEnv (VArg type_ ident) env = env & (tcmTypes . at ident ?~ (type_, getLevel env))
 updateEnv (RArg type_ ident) env = env & (tcmTypes . at ident ?~ (type_, getLevel env))
@@ -130,13 +137,13 @@ typecheckStmt Empty = return ()
 typecheckStmt Break = do
     env <- ask
 
-    unless (not $ isInLoop env)
+    unless (isInLoop env)
         (throwError $ initTypecheckError TCBreak)
 
 typecheckStmt Continue = do
     env <- ask
 
-    unless (not $ isInLoop env)
+    unless (isInLoop env)
         (throwError $ initTypecheckError TCContinue)
 
 typecheckStmt (SExp expr) = typecheckExpr expr >> return ()
@@ -154,7 +161,7 @@ typecheckStmt VRet = do
 typecheckStmt (Print expr) = do
     exprType <- typecheckExpr expr
 
-    unless (exprType `notElem` [Str, Bool, Int])
+    unless (exprType `elem` [Str, Bool, Int])
         (throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes exprType [Str, Bool, Int])
 
 typecheckStmt (Ret expr) = do
@@ -246,19 +253,35 @@ typecheckExpr(EAdd expr1 addop expr2) = do
 
 typecheckExpr(EVar lvalue) = evalLValue lvalue >>= extractVariableType
 
--- Wazne
 typecheckExpr(EApp lvalue exprs) = do
     ident <- evalLValue lvalue
     funcType <- extractVariableType ident
     typecheckFuncApplication funcType exprs
 
-typecheckExpr(ELambda type_ lambdaArgs block) = do
-    return type_
+typecheckExpr(EAppLambda expr exprs) = do
+    func <- typecheckExpr expr
+    typecheckFuncApplication func exprs
+
+-- TODO TYPECHECK block
+typecheckExpr(ELambda (LambdaType args type_) lambdaArgs block) = return type_
 
 typecheckExpr a = throwError $ initTypecheckError $ TCDebug (show a)
 
 typecheckFuncApplication :: Type -> [Expr] -> TCM Type
-typecheckFuncApplication = undefined
+typecheckFuncApplication (LambdaType lambdaArgs returnType) exprs = do
+
+    unless (length exprs == length lambdaArgs)
+        (throwError $ initTypecheckError $ TCInvalidNumberOfArguments)
+
+    suppliedTypes <- mapM typecheckExpr exprs
+
+    let lambdaArgsTypes = map lambArgToType lambdaArgs
+
+    let allCorrectTypes = map (\(a, b) -> (a == b, (a,b))) (zip suppliedTypes lambdaArgsTypes)
+
+    case find (\(eq, _) -> not eq) allCorrectTypes of
+        Just (_, (a, b)) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType a b
+        Nothing -> return returnType
 
 typecheckExpr2 :: Expr -> Expr -> TCM (Type, Type)
 typecheckExpr2 leftExpr rightExpr = do

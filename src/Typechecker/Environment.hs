@@ -13,7 +13,7 @@ data TCMEnv = TCMEnv { _tcmTypes          :: Map.Map Ident (Type, Integer)
                , _tcmLevel              :: Integer
                , _tcmIsInLoop           :: Bool
                , _tcmFunctionReturnType :: Maybe Type
-               }
+               } deriving (Show)
 
 initTCMEnv = TCMEnv { _tcmTypes = Map.empty
               , _tcmLevel = 0

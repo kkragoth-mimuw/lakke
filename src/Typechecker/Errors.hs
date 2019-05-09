@@ -24,11 +24,12 @@ data TypecheckError = TCInvalidTypeExpectedType Type Type
 
 instance Show TypecheckError where
     show (TCInvalidTypeExpectedType type' allowedType) = printf "Invalid type: %s. Expected: %s" (show type') (show allowedType)
-    show (TCInvalidTypeExpectedTypes type' allowedTypes) = printf "Invalid type: $s. Expected %s" (show type') (show $ map show allowedTypes)
+    show (TCInvalidTypeExpectedTypes type' allowedTypes) = printf "Invalid type: %s. Expected %s" (show type') (show allowedTypes)
     show (TCRedeclaration ident)                        = printf "Tried to redeclare: %s" (show ident)
-    show TCBreak                                       = printf "Break stmt not in loop"
-    show TCContinue                                    = printf "Continue stmt not in loop"
+    show TCBreak                                       =  "Break stmt not in loop"
+    show TCContinue                                    = "Continue stmt not in loop"
     show TCNotLValue                                   = "Incorrect lvalue"
+    show TCInvalidNumberOfArguments                    = "Passed invalid number of arguments"
     show (TCDebug str)                                 = str
     show a = ""
 
