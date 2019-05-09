@@ -7,6 +7,8 @@ import qualified Data.Map     as Map
 
 import           AbsLakke
 
+import           Typechecker.Errors
+
 data TCMEnv = TCMEnv { _tcmTypes          :: Map.Map Ident (Type, Integer)
                , _tcmLevel              :: Integer
                , _tcmIsInLoop           :: Bool

@@ -42,6 +42,7 @@ executable lakke
                        Typechecker.Statements
                        Typechecker.Typecheck
                        Typechecker.TypecheckMonad
+                       Typechecker.EnvironmentUtils
   -- other-extensions:
   build-depends:       base >=4.11
                ,       mtl

@@ -5,7 +5,7 @@ import Control.Monad.Reader
 
 import AbsLakke
 
-import Typechecker.ErrorsO
+import Typechecker.Errors
 import Typechecker.TypecheckMonad
 import Typechecker.Environment
 import Typechecker.Statements

@@ -8,6 +8,7 @@ import AbsLakke
 import Typechecker.Environment
 import Typechecker.TypecheckMonad
 import Typechecker.Errors
+import Typechecker.EnvironmentUtils
 
 typecheckTopDefs :: [TopDef] -> TCM TCMEnv
 typecheckTopDefs [] = ask
@@ -36,8 +37,8 @@ typecheckExpr (EOr expr1 expr2) = do
         (Bool, Bool) -> return Bool
         (Bool, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
         (x, _)    -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
-typecheckExpression (EAnd expr1 expr2) = do
-    (left, right) <- typecheckExpression2
+typecheckExpr (EAnd expr1 expr2) = do
+    (left, right) <- typecheckExpr2 expr1 expr2
     case (left, right) of
         (Bool, Bool) -> return Bool
         (Bool, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Bool
@@ -61,26 +62,36 @@ typecheckExpr (EMul exprLeft _ exprRight) = do
 typecheckExpr (ERel exprLeft _ exprRight) = do
     (left, right) <- typecheckExpr2 exprLeft exprRight
     case (left, right) of
-        (String, String) -> return Bool
+        (Str, Str) -> return Bool
         (Int, Int) -> return Bool
         (Int, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
-        (String, x) ->  throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
-        (x, _) -> throwError $ initTypecheckError $ ICinvalidTypeExpectedTypes x [Int, Str]
+        (Str, x) ->  throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
+        (x, _) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes x [Int, Str]
 typecheckExpr(ECast type_ expr) = do
     exprType <- typecheckExpr expr
     case (type_, exprType) of
-        (Str, Int) -> Str
+        (Str, Int) -> return Str
         (Str, x) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
         (x, _) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
 typecheckExpr(EAdd expr1 addop expr2) = do
     (left, right) <- typecheckExpr2 expr1 expr2
-    case (left, right) of
-        (Str, Str, Plus) -> Str
-        (Int, Int, _) -> Int
+    case (left, right, addop) of
+        (Str, Str, Plus) -> return Str
+        (Int, Int, _) -> return Int
         (Str, x, Plus) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
-        (Str, )
+        (Int, x, _) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
+        (x, _, _) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes x [Int, Str]
 typecheckExpr2 :: Expr -> Expr -> TCM (Type, Type)
 typecheckExpr2 leftExpr rightExpr = do
     leftType <- typecheckExprWithErrorLogging leftExpr
     rightType <- typecheckExprWithErrorLogging rightExpr
     return (leftType, rightType)
+
+
+evalLValueToIdent :: Expr -> TCM Ident
+evalLValueToIdent (EVar lvalue) = evalLValue lvalue
+evalLValueToIdent loc             = throwError $ initTypecheckError $ TCMNotLValue
+
+
+evalLValue :: LValue -> TCM Ident
+evalLValue (LValue n) = return n
