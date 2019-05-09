@@ -21,6 +21,7 @@ import           Interpreter.ErrorTypes (pprintErrorMsg)
 
 import           Typechecker.Typecheck
 import           Typechecker.Environment
+import           Typechecker.Errors (pprintTypecheckerErrorMsg)
 
 
 import           ErrM
@@ -45,7 +46,7 @@ run v p s = let ts = myLLexer s in case p ts of
                           putStrLn s
                           exitFailure
            Ok  tree -> case runTypecheck initTCMEnv tree of
-                            Left error ->  putStrLn $ "typecheck failed" ++ show error
+                            Left error ->  pprintTypecheckerErrorMsg error
                             Right _ -> do
                                       let ((result, _), buffer) = runProgram initEnv initStore tree
                                       putStrLn ""
