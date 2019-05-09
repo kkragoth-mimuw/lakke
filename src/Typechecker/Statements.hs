@@ -57,9 +57,9 @@ typecheckDecl (DeclF (FNDef fnType fnName args (Block stmts))) = do
 
     let newEnv = (env  & (tcmTypes . at fnName ?~ (funcType, getLevel env)))
 
-    let newEnvForFunction = newEnv
+    let newEnvForFunction = foldr updateEnv newEnv args
 
-    local (const newEnvForFunction) (typecheckStmts stmts)
+    local (const (increaseLevel newEnvForFunction)) (typecheckStmts stmts)
 
     return newEnv
 
@@ -68,6 +68,9 @@ argToLambArg arg = case arg of
     VArg type' _ -> LambVArg type'
     RArg type' _ -> LambRArg type'
 
+updateEnv :: Arg -> TCMEnv -> TCMEnv
+updateEnv (VArg type_ ident) env = env & (tcmTypes . at ident ?~ (type_, getLevel env))
+updateEnv (RArg type_ ident) env = env & (tcmTypes . at ident ?~ (type_, getLevel env))
 
 typecheckStmts :: [Stmt] -> TCM ()
 typecheckStmts [] = return ()
@@ -240,6 +243,18 @@ typecheckExpr(EAdd expr1 addop expr2) = do
         (Str, x, Plus)   -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Str
         (Int, x, _)      -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType x Int
         (x, _, _)        -> throwError $ initTypecheckError $ TCInvalidTypeExpectedTypes x [Int, Str]
+-- Wazne
+typecheckExpr(EApp lvalue exprs) = do
+    ident <- evalLValue lvalue
+    funcType <- extractVariableType ident
+    typecheckFuncApplication funcType exprs
+
+typecheckExpr(ELambda type_ lambdaArgs block) = do
+    return type_
+
+typecheckFuncApplication :: Type -> [Expr] -> TCM Type
+typecheckFuncApplication = undefined
+
 typecheckExpr2 :: Expr -> Expr -> TCM (Type, Type)
 typecheckExpr2 leftExpr rightExpr = do
     leftType <- typecheckExprWithErrorLogging leftExpr
