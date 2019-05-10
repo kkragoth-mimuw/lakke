@@ -14,6 +14,7 @@ import           Typechecker.Environment
 import           Typechecker.EnvironmentUtils
 import           Typechecker.Errors
 import           Typechecker.TypecheckMonad
+import           Typechecker.Utils
 
 typecheckTopDefs :: [TopDef] -> TCM TCMEnv
 typecheckTopDefs [] = ask
@@ -67,19 +68,6 @@ typecheckDecl (DeclF (FNDef fnType fnName args (Block stmts))) = do
 
     return newEnv
 
-argToLambArg :: Arg -> LambArg
-argToLambArg arg = case arg of
-    VArg type' _ -> LambVArg type'
-    RArg type' _ -> LambRArg type'
-
-lambArgToType :: LambArg -> Type
-lambArgToType arg = case arg of
-    LambVArg type' -> type'
-    LambRArg type' -> type'
-
-updateEnv :: Arg -> TCMEnv -> TCMEnv
-updateEnv (VArg type_ ident) env = env & (tcmTypes . at ident ?~ (type_, getLevel env))
-updateEnv (RArg type_ ident) env = env & (tcmTypes . at ident ?~ (type_, getLevel env))
 
 typecheckStmts :: [Stmt] -> TCM ()
 typecheckStmts [] = return ()
@@ -277,7 +265,6 @@ typecheckExpr(ELambda type_ suppliedLambArgs (Block stmts)) = do
 
     return $ LambdaType lambArgs type_ 
 
-typecheckExpr a = throwError $ initTypecheckError $ TCDebug (show a)
 
 typecheckFuncApplication :: Type -> [Expr] -> TCM Type
 typecheckFuncApplication (LambdaType lambdaArgs returnType) exprs = do
@@ -285,15 +272,20 @@ typecheckFuncApplication (LambdaType lambdaArgs returnType) exprs = do
     unless (length exprs == length lambdaArgs)
         (throwError $ initTypecheckError $ TCInvalidNumberOfArguments)
 
-    suppliedTypes <- mapM typecheckExpr exprs
+    let (vargs, rargs) = partition(\(_, functionArg) -> isLambVArg functionArg) (zip exprs lambdaArgs)
+    let (vFargs, rFargs) = join bimap (map (lambArgToType . snd)) (vargs, rargs)
+    
+    rSuppliedArgsLValuesIdents <- mapM (evalLValueToIdent .fst) rargs
 
-    let lambdaArgsTypes = map lambArgToType lambdaArgs
+    vSuppliedArgs <- mapM (typecheckExpr . fst) vargs
+    rSuppliedArgs <- mapM extractVariableType rSuppliedArgsLValuesIdents
 
-    let allCorrectTypes = map (\(a, b) -> (a == b, (a,b))) (zip suppliedTypes lambdaArgsTypes)
+    let allCorrectTypes = map (\(a, b) -> (a == b, (a,b))) ((zip vSuppliedArgs vFargs) ++ (zip rSuppliedArgs rFargs))
 
     case find (\(eq, _) -> not eq) allCorrectTypes of
         Just (_, (a, b)) -> throwError $ initTypecheckError $ TCInvalidTypeExpectedType a b
         Nothing -> return returnType
+
 
 typecheckExpr2 :: Expr -> Expr -> TCM (Type, Type)
 typecheckExpr2 leftExpr rightExpr = do
@@ -317,10 +309,3 @@ isStmtDeclaration stmt = case stmt of
     (DeclF _ ) -> True
     _          -> False
 
-lambSuppliedArgToArg :: LambSuppliedArgWithType -> Arg
-lambSuppliedArgToArg = \case LambSuppliedVArgWithType ident argType -> VArg argType ident
-                             LambSuppliedRArgWithType ident argType -> RArg argType ident
-
-lambSuppliedArgToLambArg :: LambSuppliedArgWithType -> LambArg
-lambSuppliedArgToLambArg = \case LambSuppliedVArgWithType ident argType -> LambVArg argType
-                                 LambSuppliedRArgWithType ident argType -> LambRArg argType

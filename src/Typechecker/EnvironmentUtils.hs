@@ -11,6 +11,11 @@ import Typechecker.Environment
 import Typechecker.TypecheckMonad
 import Typechecker.Errors
 
+
+updateEnv :: Arg -> TCMEnv -> TCMEnv
+updateEnv (VArg type_ ident) env = env & (tcmTypes . at ident ?~ (type_, getLevel env))
+updateEnv (RArg type_ ident) env = env & (tcmTypes . at ident ?~ (type_, getLevel env))
+
 extractVariableType :: Ident -> TCM Type
 extractVariableType ident = do
     env <- ask

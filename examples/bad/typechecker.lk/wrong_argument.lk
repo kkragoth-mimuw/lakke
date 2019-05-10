@@ -1,0 +1,5 @@
+int main() {
+    print(
+        string :: (a :: int, b :: int) -> { return cast(string) (a+b); }("Hello", "World")
+    );
+}

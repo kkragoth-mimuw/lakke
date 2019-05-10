@@ -1,11 +1,13 @@
 module Typechecker.Errors where
 
-import           Data.Char
+import           Data.List
+import           System.Console.Pretty (Color (..), Style (..), bgColor, color, style, supportsPretty)
 import           Text.Printf
-import           System.Console.Pretty         (Color (..), Style (..), bgColor, color, style, supportsPretty)
 
 import           AbsLakke
 import           PrintLakke
+
+import           Typechecker.Utils
 
 defaultLevelOfLogging = 5
 
@@ -23,14 +25,15 @@ data TypecheckError = TCInvalidTypeExpectedType Type Type
                     | TCDebug String
 
 instance Show TypecheckError where
-    show (TCInvalidTypeExpectedType type' allowedType) = printf "Invalid type: %s. Expected: %s" (show type') (show allowedType)
-    show (TCInvalidTypeExpectedTypes type' allowedTypes) = printf "Invalid type: %s. Expected %s" (show type') (show allowedTypes)
-    show (TCRedeclaration ident)                        = printf "Tried to redeclare: %s" (show ident)
-    show TCBreak                                       =  "Break stmt not in loop"
-    show TCContinue                                    = "Continue stmt not in loop"
-    show TCNotLValue                                   = "Incorrect lvalue"
-    show TCInvalidNumberOfArguments                    = "Passed invalid number of arguments"
-    show (TCDebug str)                                 = "DEBUG, yo" ++ str
+    show (TCInvalidTypeExpectedType type' allowedType)   = printf "Invalid type: %s. Expected: %s" (prettyShowType type') (prettyShowType allowedType)
+    show (TCInvalidTypeExpectedTypes type' allowedTypes) = printf "Invalid type: %s. Expected %s" (prettyShowType type') (intercalate " or " (map prettyShowType allowedTypes))
+    show (TCRedeclaration (Ident ident))                 = printf "Tried to redeclare: %s" (show ident)
+    show TCBreak                                         =  "Break stmt not in loop"
+    show TCContinue                                      = "Continue stmt not in loop"
+    show TCNotLValue                                     = "Incorrect lvalue"
+    show TCInvalidNumberOfArguments                      = "Passed invalid number of arguments"
+    show TCMNotLValue                                    = "Supplied expression is not lvalue"
+    show (TCDebug str)                                   = "DEBUG:" ++ str
     show a = ""
 
 data TypecheckErrorWithLogging = TypecheckErrorWithLogging TypecheckError Integer [String] deriving (Show)
@@ -46,16 +49,13 @@ appendLogToTypecheckError                           (TypecheckErrorWithLogging e
 pprintTypecheckerErrorMsg :: TypecheckErrorWithLogging -> IO ()
 pprintTypecheckerErrorMsg wholeMsg@(TypecheckErrorWithLogging error _ stack) = do
     putStrLn (color Red ("Lakke's typechecker found a problem: " ++ show error))
-    mapM_ (\line -> putStrLn ("in: " ++  trim line))  stack    
+    mapM_ (\line -> putStrLn ("\nFound in:\n " ++  trim line))  stack
 
 
-trimLeft :: String -> String
-trimLeft = dropWhile isSpace
-    
-trimRight :: String -> String
-trimRight str | all isSpace str = ""
-trimRight (c : cs) = c : trimRight cs
-    
-trim :: String -> String
-trim = trimLeft . trimRight
-
+prettyShowType :: Type -> String
+prettyShowType type_ = case type_ of
+    Int                            -> "int"
+    Str                            -> "string"
+    Bool                           -> "bool"
+    Void                           -> "void"
+    LambdaType lambArgs returnType -> printf "(%s) => %s" (intercalate "," (map (prettyShowType . lambArgToType) lambArgs)) (prettyShowType returnType)
