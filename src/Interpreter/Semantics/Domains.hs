@@ -4,7 +4,6 @@ module Interpreter.Semantics.Domains where
 
 import           Control.Lens
 import qualified Data.Map           as Map
-import qualified Data.Vector        as V
 
 import           AbsLakke
 

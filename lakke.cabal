@@ -43,13 +43,13 @@ executable lakke
                        Typechecker.Typecheck
                        Typechecker.TypecheckMonad
                        Typechecker.EnvironmentUtils
+                       Typechecker.Utils
   -- other-extensions:
-  build-depends:       base >=4.11
+  build-depends:       base >=4.10
                ,       mtl
                ,       text
                ,       array
                ,       containers
-               ,       vector
                ,       lens
                ,       pretty-terminal
                ,       pretty-simple
