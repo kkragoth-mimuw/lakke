@@ -1,7 +1,6 @@
 module Typechecker.Errors where
 
 import           Data.List
-import           System.Console.Pretty (Color (..), Style (..), bgColor, color, style, supportsPretty)
 import           Text.Printf
 
 import           AbsLakke
@@ -48,7 +47,7 @@ appendLogToTypecheckError                           (TypecheckErrorWithLogging e
 
 pprintTypecheckerErrorMsg :: TypecheckErrorWithLogging -> IO ()
 pprintTypecheckerErrorMsg wholeMsg@(TypecheckErrorWithLogging error _ stack) = do
-    putStrLn (color Red ("Lakke's typechecker found a problem: " ++ show error))
+    putStrLn ("Lakke's typechecker found a problem: " ++ show error)
     mapM_ (\line -> putStrLn ("\nFound in:\n " ++  trim line))  stack
 
 

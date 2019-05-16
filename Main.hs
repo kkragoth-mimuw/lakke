@@ -4,7 +4,6 @@ module Main where
 import           Control.Monad                 (when)
 import qualified Data.Map                      as Map
 import           Data.Typeable
-import           System.Console.Pretty         (Color (..), Style (..), bgColor, color, style, supportsPretty)
 import           System.Environment            (getArgs, getProgName)
 import           System.Exit                   (exitFailure, exitSuccess)
 import           System.IO                     (hGetContents, stdin)
@@ -50,7 +49,7 @@ run v p s = let ts = myLLexer s in case p ts of
                             Right _ -> do
                                       let ((result, _), buffer) = runProgram initEnv initStore tree
                                       putStrLn ""
-                                      putStr (color Yellow ( unlines buffer))
+                                      putStr $ unlines buffer
 
                                       case result of
                                         Left error -> pprintErrorMsg error

@@ -2,7 +2,6 @@ module Interpreter.ErrorTypes where
 
 import           Data.Char
 import           Text.Printf
-import           System.Console.Pretty         (Color (..), Style (..), bgColor, color, style, supportsPretty)
 
 import           AbsLakke
 import           PrintLakke
@@ -71,7 +70,7 @@ appendLogToRuntimeError                         (RuntimeErrorWithLogging error l
 
 pprintErrorMsg :: RuntimeErrorWithLogging -> IO ()
 pprintErrorMsg wholeMsg@(RuntimeErrorWithLogging error _ stack) = do
-    putStrLn (color Red ("Lakke has encountered a problem: " ++ show error))
+    putStrLn ("Lakke has encountered a problem: " ++ show error)
     mapM_ (\line -> putStrLn ("in: " ++  trim line))  stack    
 
 
