@@ -10,9 +10,9 @@ Global.     TopDef ::= Decl ;
 
 separator nonempty TopDef "" ;
 
-VArg. 	   Arg ::= Type Ident;     ;
+VArg. 	   Arg ::= Type Ident     ;
 
-RArg.      Arg ::= Type "&" Ident; ;
+RArg.      Arg ::= Type "&" Ident ;
 
 separator  Arg "," ;
 
