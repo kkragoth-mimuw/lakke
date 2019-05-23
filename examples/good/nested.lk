@@ -1,4 +1,5 @@
 int f(int x) {
+	x = 10;
 	int f2(int y) {
 		return x + y;
 	}

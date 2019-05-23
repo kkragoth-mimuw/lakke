@@ -1,12 +1,16 @@
 int N = 6;
 
-int fact(int n) {
-  if (n > 0) {
-    return n * fact(n - 1);
+int fac(int n) {
+  int fact(int n) {
+    if (n > 0) {
+      return n * fac(n - 1);
+    }
+    return 1; 
   }
-  return 1; 
+
+  return fact(n);
 }
 
 int main() {
-  print(fact(N));
+  print(fac(N));
 }
