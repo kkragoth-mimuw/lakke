@@ -1,0 +1,1 @@
+ghc -o lakke generated/*.hs src/**/*.hs src/**/**/*.hs Main.hs

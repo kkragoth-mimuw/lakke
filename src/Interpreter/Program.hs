@@ -5,6 +5,8 @@ import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Control.Monad.State
 import           Control.Monad.Writer
+import           Control.Monad.Fail
+
 
 import           AbsLakke
 import           Interpreter.Debug
@@ -17,6 +19,8 @@ import           Interpreter.Semantics.Domains
 import           Interpreter.Semantics.Statements
 import           Interpreter.Semantics.TopDefs
 
+instance MonadFail Identity where
+  fail = error
 
 runProgram :: (Executable program) => Env -> Store -> program -> ((Either RuntimeErrorWithLogging (), Store), [String])
 runProgram env st program = runWriter (runStateT (runExceptT (runReaderT (exec program) env)) st)
