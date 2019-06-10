@@ -32,19 +32,13 @@ DeclF.     Stmt ::= FNDef ;
 
 Decl.      Decl ::= Type Item ";" ;
 
-SDecl.     SDeclItem ::= Type Ident;
-
 FNDef.     FNDef ::= Type Ident "(" [Arg] ")" Block ;
-
-separator   SDeclItem ";" ;
 
 LValue.         LValue  ::= Ident ;
 
 NoInit.    Item ::= LValue ; 
 
 Init.      Item ::= LValue "=" Expr ;
-
-separator nonempty Item "," ;
 
 For.       Stmt ::= "for" "(" Stmt Expr ";" Stmt ")" Block;
 
@@ -88,8 +82,6 @@ LambdaType.    Type ::= "(" [ LambArg ]")" "=>" Type ;
 LambVArg. LambArg ::= Type ;
 
 LambRArg. LambArg ::= "&" Type ;
-
-separator  Type "," ;
 
 separator LambArg "," ;
 
